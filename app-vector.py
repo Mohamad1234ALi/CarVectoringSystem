@@ -14,6 +14,18 @@ OPENSEARCH_HOST = "https://search-carsystemvector-vsbohud2ogupvyw6ssdoddybgm.us-
 INDEX_NAME = "cars_index_new"
 USERNAME = "moeuser"
 PASSWORD = "Mohamad@123"
+
+
+aws_access_key = st.secrets["AWS_ACCESS_KEY_ID"]
+aws_secret_key = st.secrets["AWS_SECRET_ACCESS_KEY"]
+aws_region = st.secrets["AWS_DEFAULT_REGION"]
+
+boto3.setup_default_session(
+    aws_access_key_id=aws_access_key,
+    aws_secret_access_key=aws_secret_key,
+    region_name=aws_region
+)
+
 dynamodb = boto3.resource("dynamodb", region_name="us-east-1")  # e.g. "eu-central-1"
 table = dynamodb.Table("CarList")
 
