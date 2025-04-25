@@ -152,7 +152,7 @@ if st.button("Find Similar Cars"):
             if full_car_info:
                 st.write(f"📏 ID: {full_car_info['CarID']}  | 🔥 Type: {full_car_info.get('BodyType', 'N/A')} ")
                 st.write(f"💡 Gearbox: {full_car_info.get('GearBox', 'N/A')} | Fuel Type: {full_car_info.get('Fuel', 'N/A')}")
-                st.write(f"📅 First Registration: {full_car_info.get('FirstReg', 'N/A')} | 💰 Price: {full_car_info.get('Price', 'N/A')}")
+                st.write(f"📅 First Registration: {full_car_info.get('FirstRegistration', 'N/A')} | 💰 Price: {full_car_info.get('Price', 'N/A')}")
                 st.write("---")
             else:
                  st.write(f"❌ Car with ID {real_ID} not found in DynamoDB.")
