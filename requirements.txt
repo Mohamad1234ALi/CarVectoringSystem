@@ -1,0 +1,7 @@
+streamlit
+opensearch-py
+scikit-learn
+numpy
+pandas
+setuptools
+protobuf==3.20.*
