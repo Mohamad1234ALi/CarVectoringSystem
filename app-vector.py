@@ -110,7 +110,7 @@ accident = st.selectbox("Accident Free:", label_encoders["AccidentFree"].classes
 color = st.selectbox("Body Color", label_encoders["BodyColor"].classes_)
 doors = st.selectbox("Number Of Doors", label_encoders["NumberOfDoors"].classes_)
 first_reg = st.slider("First Registration Year", 2000, 2025, 2015)
-gearbox = st.selectbox("Gearbox", label_encoders["Gearbox"].classes_)
+gearbox = st.selectbox("Gearbox", ["Any", "Manual", "Semiautomatic", "Automatic"])
 price = st.number_input("Price ($)", min_value=1000, max_value=100000, value=20000)
 seats = st.number_input("Number Of Seats", min_value=1, max_value=10, value=1)
 fuel_type = st.selectbox("Fuel Type", label_encoders["Fuel"].classes_)
