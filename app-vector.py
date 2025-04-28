@@ -123,7 +123,7 @@ def get_car_by_id(car_id):
 # Streamlit UI
 st.title("Car Recommendation System 🚗")
 st.write("Find similar cars 🔍")
-col1, col2 = st.columns([3, 1])
+col1, col2 = st.columns(2)
 colf1, colf2 = st.columns(2)
 
 # User Inputs
@@ -137,8 +137,8 @@ with col1:
    gearbox = st.selectbox("Gearbox", ["Manual", "Semiautomatic", "Automatic"])
 
 with col2:
-   gearbox_needed = st.checkbox("I need Gearbox?", value=False, label_visibility="hidden")
-   st.write("I need Gearbox?")
+   gearbox_needed = st.checkbox("I need Gearbox?", value=False)
+  
     
     
 price = st.number_input("Price ($)", min_value=1000, max_value=100000, value=20000)
@@ -148,7 +148,7 @@ with colf1:
     fuel_type = st.selectbox("Fuel Type", label_encoders["Fuel"].classes_)
 
 with colf2:
-    fuel_needed = st.checkbox("I need Fuel ?")
+    fuel_needed = st.checkbox("I need Fuel ?",  value=False)
     
 performance = st.number_input("Performance", min_value=50, max_value=1000, value=150)
 
