@@ -123,7 +123,7 @@ def get_car_by_id(car_id):
 # Streamlit UI
 st.title("Car Recommendation System 🚗")
 st.write("Find similar cars 🔍")
-col1, col2 = st.columns(2)
+#col1, col2 = st.columns(2)
 colf1, colf2 = st.columns(2)
 
 # User Inputs
@@ -133,11 +133,20 @@ color = st.selectbox("Body Color", label_encoders["BodyColor"].classes_)
 doors = st.selectbox("Number Of Doors", label_encoders["NumberOfDoors"].classes_)
 first_reg = st.slider("First Registration Year", 2000, 2025, 2015)
 
-with col1:
-    gearbox = st.selectbox("Gearbox", ["Manual", "Semiautomatic", "Automatic"])
+#with col1:
+   # gearbox = st.selectbox("Gearbox", ["Manual", "Semiautomatic", "Automatic"])
 
-with col2:
-    gearbox_needed = st.checkbox("I need Gearbox ?")
+#with col2:
+   # gearbox_needed = st.checkbox("I need Gearbox ?")
+    
+with st.container():
+    st.markdown("**Gearbox**")
+    col1, col2 = st.columns([3, 1])  # 3:1 ratio for better size
+
+    with col1:
+        gearbox = st.selectbox("", ["Manual", "Semiautomatic", "Automatic"])
+    with col2:
+        gearbox_needed = st.checkbox("Needed?", value=False)    
     
 price = st.number_input("Price ($)", min_value=1000, max_value=100000, value=20000)
 seats = st.number_input("Number Of Seats", min_value=1, max_value=10, value=1)
