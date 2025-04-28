@@ -10,7 +10,7 @@ from io import BytesIO
 import boto3
 
 # OpenSearch Configuration
-OPENSEARCH_HOST = "https://search-carsystemvector-vsbohud2ogupvyw6ssdoddybgm.us-east-1.es.amazonaws.com"
+OPENSEARCH_HOST = "https://search-moecarsystemnew-iz3722c4l4wvbpah5amynkjwse.us-east-1.es.amazonaws.com"
 INDEX_NAME = "cars_index_new"
 USERNAME = "moeuser"
 PASSWORD = "Mohamad@123"
