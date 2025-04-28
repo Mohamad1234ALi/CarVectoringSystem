@@ -124,6 +124,8 @@ def get_car_by_id(car_id):
 st.title("Car Recommendation System 🚗")
 st.write("Find similar cars 🔍")
 col1, col2 = st.columns(2)
+colf1, colf2 = st.columns(2)
+
 # User Inputs
 category = st.selectbox("Body Type", label_encoders["BodyType"].classes_)
 accident = st.selectbox("Accident Free:", label_encoders["AccidentFree"].classes_)
@@ -135,11 +137,17 @@ with col1:
     gearbox = st.selectbox("Gearbox", ["Manual", "Semiautomatic", "Automatic"])
 
 with col2:
-    gearbox_needed = st.checkbox("I need this")
+    gearbox_needed = st.checkbox("I need Gearbox ?")
     
 price = st.number_input("Price ($)", min_value=1000, max_value=100000, value=20000)
 seats = st.number_input("Number Of Seats", min_value=1, max_value=10, value=1)
-fuel_type = st.selectbox("Fuel Type", label_encoders["Fuel"].classes_)
+
+with colf1:
+    fuel_type = st.selectbox("Fuel Type", label_encoders["Fuel"].classes_)
+
+with colf2:
+    fuel_needed = st.checkbox("I need Fuel ?")
+    
 performance = st.number_input("Performance", min_value=50, max_value=1000, value=150)
 
 if st.button("Find Similar Cars"):
@@ -151,6 +159,9 @@ if st.button("Find Similar Cars"):
 
         if gearbox_needed :
             results = [car for car in results if car["_source"].get("GearBox", "").lower() == gearbox.lower()]
+
+        if fuel_needed :
+            results = [car for car in results if car["_source"].get("Fuel", "").lower() == fuel_type.lower()]
             
         for car in results:
             
