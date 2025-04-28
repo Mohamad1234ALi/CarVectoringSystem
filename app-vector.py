@@ -132,7 +132,7 @@ doors = st.selectbox("Number Of Doors", label_encoders["NumberOfDoors"].classes_
 first_reg = st.slider("First Registration Year", 2000, 2025, 2015)
 
 with col1:
-    gearbox = st.selectbox("Gearbox", ["Any", "Manual", "Semiautomatic", "Automatic"])
+    gearbox = st.selectbox("Gearbox", ["Manual", "Semiautomatic", "Automatic"])
 
 with col2:
     gearbox_needed = st.checkbox("I need this")
@@ -148,11 +148,14 @@ if st.button("Find Similar Cars"):
     results = search_similar_cars(query_vector)
     
     if results:
-        for car in results:
-            car_data = car["_source"]
+
+        if gearbox_needed :
+            results = [car for car in results if car["_source"].get("GearBox", "").lower() == gearbox.lower()]
             
+        for car in results:
+            
+            car_data = car["_source"]       
             real_ID = car_data["CarID"]
-           
             full_car_info = get_car_by_id(real_ID)
         
             if full_car_info:
