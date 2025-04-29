@@ -132,7 +132,7 @@ category = st.selectbox("Body Type", label_encoders["BodyType"].classes_)
 #accident = st.selectbox("Accident Free:", label_encoders["AccidentFree"].classes_)
 color = st.selectbox("Body Color", label_encoders["BodyColor"].classes_)
 doors = st.selectbox("Number Of Doors", label_encoders["NumberOfDoors"].classes_)
-first_reg = st.slider("First Registration Year", 2000, 2025, 2005)
+first_reg = st.slider("First Registration Year", 1980, 2025, 2005)
 
 with col1:
    gearbox = st.selectbox("Gearbox", label_encoders["GearBox"].classes_)
