@@ -65,16 +65,16 @@ client = OpenSearch(
 )
 
 # Define categorical and numerical features
-CATEGORICAL_FEATURES = ["AccidentFree", "BodyColor", "BodyType", "Fuel", "NumberOfDoors"]
-NUMERICAL_FEATURES = ["FirstRegistration", "NumberOfSeats", "Power", "Price"]
+CATEGORICAL_FEATURES = ["BodyColor", "BodyType", "Fuel", "NumberOfDoors", "GearBox"]
+NUMERICAL_FEATURES = ["FirstRegistration", "NumberOfSeats", "Power", "Price", "Mileage"]
 
 # URLs for LabelEncoders in S3
 label_encoder_urls = {
-    "AccidentFree": "https://car-recommendation-raed.s3.us-east-1.amazonaws.com/label_encoders/AccidentFree_encoder.pkl",
     "BodyColor": "https://car-recommendation-raed.s3.us-east-1.amazonaws.com/label_encoders/BodyColor_encoder.pkl",
     "BodyType": "https://car-recommendation-raed.s3.us-east-1.amazonaws.com/label_encoders/BodyType_encoder.pkl",
     "Fuel": "https://car-recommendation-raed.s3.us-east-1.amazonaws.com/label_encoders/Fuel_encoder.pkl",
     "NumberOfDoors": "https://car-recommendation-raed.s3.us-east-1.amazonaws.com/label_encoders/NumberOfDoors_encoder.pkl",
+    "GearBox": "https://car-recommendation-raed.s3.us-east-1.amazonaws.com/label_encoders/GearBox_encoder.pkl",
 }
 
 label_encoders = load_label_encoders(label_encoder_urls)
@@ -84,19 +84,20 @@ scaler_url = "https://car-recommendation-raed.s3.us-east-1.amazonaws.com/scaler/
 scaler = load_scaler(scaler_url)
     
 # Function to convert user input into vector
-def preprocess_input(category, accident, color, doors, first_reg, gearbox, price, seats, fuel_type, performance):
+def preprocess_input(category, mileage, color, doors, first_reg, gearbox, price, seats, fuel_type, performance):
 
-    AccidentFree_encoded = label_encoders["AccidentFree"].transform([accident])[0]
+    
     BodyColor_encoded = label_encoders["BodyColor"].transform([color])[0]
     BodyType_encoded = label_encoders["BodyType"].transform([category])[0]
     Fuel_encoded = label_encoders["Fuel"].transform([fuel_type])[0]
     NumberOfDoors_encoded = label_encoders["NumberOfDoors"].transform([doors])[0]
+    GearBox_encoded = label_encoders["GearBox"].transform([gearbox])[0]
 
     # numerical_values = np.array([[first_reg, price, mileage, performance]])
     # numerical_scaled = scaler.transform(numerical_values)[0] 
-    numerical_scaled = scaler.transform([[first_reg, seats, performance, price]])[0]  # Flatten the result
+    numerical_scaled = scaler.transform([[first_reg, seats, performance, price, mileage]])[0]  # Flatten the result
 
-    return np.concatenate(([AccidentFree_encoded, BodyColor_encoded, BodyType_encoded, Fuel_encoded, NumberOfDoors_encoded], numerical_scaled))
+    return np.concatenate(([BodyColor_encoded, BodyType_encoded, Fuel_encoded, NumberOfDoors_encoded, GearBox_encoded], numerical_scaled))
 
 # Function to search similar cars in OpenSearch
 def search_similar_cars(query_vector):
@@ -106,7 +107,7 @@ def search_similar_cars(query_vector):
             "knn": {
                 "vector": {
                     "vector": query_vector.tolist(),
-                    "k": 9
+                    "k": 10
                 }
             }
         }
@@ -128,21 +129,22 @@ colf1, colf2 = st.columns(2)
 
 # User Inputs
 category = st.selectbox("Body Type", label_encoders["BodyType"].classes_)
-accident = st.selectbox("Accident Free:", label_encoders["AccidentFree"].classes_)
+#accident = st.selectbox("Accident Free:", label_encoders["AccidentFree"].classes_)
 color = st.selectbox("Body Color", label_encoders["BodyColor"].classes_)
 doors = st.selectbox("Number Of Doors", label_encoders["NumberOfDoors"].classes_)
-first_reg = st.slider("First Registration Year", 2000, 2025, 2015)
+first_reg = st.slider("First Registration Year", 2000, 2025, 2005)
 
 with col1:
-   gearbox = st.selectbox("Gearbox", ["Manual", "Semiautomatic", "Automatic"])
+   gearbox = st.selectbox("Gearbox", label_encoders["GearBox"].classes_)
 
 with col2:
    gearbox_needed = st.checkbox("I need Gearbox?", value=False)
   
     
     
-price = st.number_input("Price ($)", min_value=1000, max_value=100000, value=20000)
-seats = st.number_input("Number Of Seats", min_value=1, max_value=10, value=1)
+price = st.number_input("Price ($)", min_value=1000, max_value=100000, value=5000)
+mileage = st.number_input("Mileage (Km)", min_value=0, max_value=500000, value=10000)
+seats = st.number_input("Number Of Seats", min_value=1, max_value=10, value=4)
 
 with colf1:
     fuel_type = st.selectbox("Fuel Type", label_encoders["Fuel"].classes_)
@@ -150,10 +152,10 @@ with colf1:
 with colf2:
     fuel_needed = st.checkbox("I need Fuel ?",  value=False)
     
-performance = st.number_input("Performance", min_value=50, max_value=1000, value=150)
+performance = st.number_input("Performance", min_value=50, max_value=1000, value=100)
 
 if st.button("Find Similar Cars"):
-    query_vector = preprocess_input(category, accident, color, doors, first_reg, gearbox, price, seats, fuel_type, performance)
+    query_vector = preprocess_input(category, mileage, color, doors, first_reg, gearbox, price, seats, fuel_type, performance)
     
     results = search_similar_cars(query_vector)
     
