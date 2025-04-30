@@ -116,13 +116,8 @@ def get_car_by_id(car_id):
 st.title("Car Recommendation System 🚗")
 st.write("Find similar cars 🔍")
 col1, col2 = st.columns(2)
-colf1, colf2 = st.columns(2)
 
 # User Inputs
-category = st.selectbox("Body Type", onehot_encoder.categories_[CATEGORICAL_FEATURES.index("BodyType")])
-color = st.selectbox("Body Color", onehot_encoder.categories_[CATEGORICAL_FEATURES.index("BodyColor")])
-doors = st.selectbox("Number Of Doors", onehot_encoder.categories_[CATEGORICAL_FEATURES.index("NumberOfDoors")])
-drivetype = st.selectbox("Drive Type", onehot_encoder.categories_[CATEGORICAL_FEATURES.index("DriveType")])
 
 with col1:
    gearbox = st.selectbox("Gearbox", onehot_encoder.categories_[CATEGORICAL_FEATURES.index("GearBox")])
@@ -130,12 +125,47 @@ with col1:
 with col2:
    gearbox_needed = st.checkbox("I need Gearbox?", value=False)
 
-with colf1:
+col1, col2 = st.columns(2)
+
+with col1:
     fuel_type = st.selectbox("Fuel Type", onehot_encoder.categories_[CATEGORICAL_FEATURES.index("Fuel")])
     
-with colf2:
+with col2:
     fuel_needed = st.checkbox("I need Fuel ?",  value=False)
+
+col1, col2 = st.columns(2)
+
+with col1:
+    category = st.selectbox("Body Type", onehot_encoder.categories_[CATEGORICAL_FEATURES.index("BodyType")])
     
+with col2:
+    category_needed = st.checkbox("I need category ?",  value=False)
+
+col1, col2 = st.columns(2)
+
+with col1:
+    color = st.selectbox("Body Color", onehot_encoder.categories_[CATEGORICAL_FEATURES.index("BodyColor")])
+    
+with col2:
+    color_needed = st.checkbox("I need color ?",  value=False)
+
+col1, col2 = st.columns(2)
+
+with col1:
+    doors = st.selectbox("Number Of Doors", onehot_encoder.categories_[CATEGORICAL_FEATURES.index("NumberOfDoors")])
+    
+with col2:
+    doors_needed = st.checkbox("I need doors ?",  value=False)
+
+col1, col2 = st.columns(2)
+
+with col1:
+    drivetype = st.selectbox("Drive Type", onehot_encoder.categories_[CATEGORICAL_FEATURES.index("DriveType")])
+    
+with col2:
+    drive_needed = st.checkbox("I need drive type ?",  value=False)
+
+
 price = st.number_input("Price ($)", min_value=1000, max_value=100000, value=5000)
 mileage = st.number_input("Mileage (Km)", min_value=0, max_value=500000, value=10000)
 seats = st.number_input("Number Of Seats", min_value=1, max_value=10, value=4)
@@ -158,6 +188,18 @@ if st.button("Find Similar Cars"):
 
         if fuel_needed :
             results = [car for car in results if car["_source"].get("Fuel", "").lower() == fuel_type.lower()]
+
+        if category_needed :
+            results = [car for car in results if car["_source"].get("BodyType", "").lower() == category.lower()]
+
+        if color_needed :
+            results = [car for car in results if car["_source"].get("BodyColor", "").lower() == color.lower()]
+
+        if doors_needed :
+            results = [car for car in results if car["_source"].get("NumberOfDoors", "").lower() == doors.lower()]
+
+        if drive_needed :
+            results = [car for car in results if car["_source"].get("DriveType", "").lower() == drivetype.lower()]
             
         for car in results:
             
