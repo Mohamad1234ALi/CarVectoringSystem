@@ -119,19 +119,19 @@ col1, col2 = st.columns(2)
 colf1, colf2 = st.columns(2)
 
 # User Inputs
-category = st.selectbox("Body Type", onehot_encoder.categories_[categorical.index("BodyType")])
-color = st.selectbox("Body Color", onehot_encoder.categories_[categorical.index("BodyColor")])
-doors = st.selectbox("Number Of Doors", onehot_encoder.categories_[categorical.index("NumberOfDoors")])
-drivetype = st.selectbox("Drive Type", onehot_encoder.categories_[categorical.index("DriveType")])
+category = st.selectbox("Body Type", onehot_encoder.categories_[CATEGORICAL_FEATURES.index("BodyType")])
+color = st.selectbox("Body Color", onehot_encoder.categories_[CATEGORICAL_FEATURES.index("BodyColor")])
+doors = st.selectbox("Number Of Doors", onehot_encoder.categories_[CATEGORICAL_FEATURES.index("NumberOfDoors")])
+drivetype = st.selectbox("Drive Type", onehot_encoder.categories_[CATEGORICAL_FEATURES.index("DriveType")])
 
 with col1:
-   gearbox = st.selectbox("Gearbox", onehot_encoder.categories_[categorical.index("GearBox")])
+   gearbox = st.selectbox("Gearbox", onehot_encoder.categories_[CATEGORICAL_FEATURES.index("GearBox")])
     
 with col2:
    gearbox_needed = st.checkbox("I need Gearbox?", value=False)
 
 with colf1:
-    fuel_type = st.selectbox("Fuel Type", onehot_encoder.categories_[categorical.index("Fuel")])
+    fuel_type = st.selectbox("Fuel Type", onehot_encoder.categories_[CATEGORICAL_FEATURES.index("Fuel")])
     
 with colf2:
     fuel_needed = st.checkbox("I need Fuel ?",  value=False)
