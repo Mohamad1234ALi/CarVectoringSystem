@@ -139,7 +139,7 @@ with col1:
     category = st.selectbox("Body Type", onehot_encoder.categories_[CATEGORICAL_FEATURES.index("BodyType")])
     
 with col2:
-    category_needed = st.checkbox("I need category ?",  value=False)
+    category_needed = st.checkbox("I need Body Type ?",  value=False)
 
 col1, col2 = st.columns(2)
 
@@ -147,7 +147,7 @@ with col1:
     color = st.selectbox("Body Color", onehot_encoder.categories_[CATEGORICAL_FEATURES.index("BodyColor")])
     
 with col2:
-    color_needed = st.checkbox("I need color ?",  value=False)
+    color_needed = st.checkbox("I need Body Color ?",  value=False)
 
 col1, col2 = st.columns(2)
 
@@ -155,7 +155,7 @@ with col1:
     doors = st.selectbox("Number Of Doors", onehot_encoder.categories_[CATEGORICAL_FEATURES.index("NumberOfDoors")])
     
 with col2:
-    doors_needed = st.checkbox("I need doors ?",  value=False)
+    doors_needed = st.checkbox("I need Doors ?",  value=False)
 
 col1, col2 = st.columns(2)
 
@@ -163,7 +163,7 @@ with col1:
     drivetype = st.selectbox("Drive Type", onehot_encoder.categories_[CATEGORICAL_FEATURES.index("DriveType")])
     
 with col2:
-    drive_needed = st.checkbox("I need drive type ?",  value=False)
+    drive_needed = st.checkbox("I need Drive Type ?",  value=False)
 
 
 price = st.number_input("Price ($)", min_value=1000, max_value=100000, value=5000)
@@ -208,8 +208,10 @@ if st.button("Find Similar Cars"):
             full_car_info = get_car_by_id(real_ID)
         
             if full_car_info:
-                st.write(f"📏 ID: {full_car_info['CarID']}  | 🔥 Type: {full_car_info.get('BodyType', 'N/A')} ")
-                st.write(f"💡 Gearbox: {full_car_info.get('GearBox', 'N/A')} | Fuel Type: {full_car_info.get('Fuel', 'N/A')}")
+                st.write(f"📏 ID: {full_car_info['CarID']}  | 🔥 Body Type: {full_car_info.get('BodyType', 'N/A')} ")
+                st.write(f"💡 Gearbox: {full_car_info.get('GearBox', 'N/A')} | Fuel Type : {full_car_info.get('Fuel', 'N/A')}")
+                st.write(f"💡 Body Color: {full_car_info.get('BodyColor', 'N/A')} | Doors : {full_car_info.get('NumberOfDoors', 'N/A')}")
+                st.write(f"💡 Drive Type: {full_car_info.get('DriveType', 'N/A')} | Mileage : {full_car_info.get('Mileage', 'N/A')}")
                 st.write(f"📅 First Registration: {full_car_info.get('FirstRegistration', 'N/A')} | 💰 Price: {full_car_info.get('Price', 'N/A')}")
                 st.write("---")
             else:
