@@ -171,7 +171,7 @@ mileage = st.number_input("Mileage (Km)", min_value=0, max_value=500000, value=1
 seats = st.number_input("Number Of Seats", min_value=1, max_value=10, value=4)
 performance = st.number_input("Performance", min_value=50, max_value=1000, value=100)
 cubiccapacity = st.number_input("Cubic Capacity", min_value=900, max_value=4000, value=900)
-first_reg = st.slider("First Registration Year", 1980, 2025, 2005)
+first_reg = st.slider("First Registration Year", 1995, 2025, 2005)
 
 
     
