@@ -20,6 +20,7 @@ aws_access_key = st.secrets["AWS_ACCESS_KEY_ID"]
 aws_secret_key = st.secrets["AWS_SECRET_ACCESS_KEY"]
 aws_region = st.secrets["AWS_DEFAULT_REGION"]
 
+# Initialize the boto3
 boto3.setup_default_session(
     aws_access_key_id=aws_access_key,
     aws_secret_access_key=aws_secret_key,
@@ -98,12 +99,12 @@ def preprocess_input(category, mileage, color, doors, first_reg, gearbox, price,
 # Function to search similar cars in OpenSearch
 def search_similar_cars(query_vector):
     query = {
-        "size": 10, # show the result to user (size <= k)
+        "size": 10, # how many result showing to user (size <= k)
         "query": {
             "knn": {
                 "vector": {
                     "vector": query_vector.tolist(),
-                    "k": 10  # search in the index 
+                    "k": 10  #  how many k search in the index (table)
                 }
             }
         }
