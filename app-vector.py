@@ -10,12 +10,12 @@ from io import BytesIO
 import boto3
 
 # OpenSearch Configuration
-OPENSEARCH_HOST = "https://search-mycarsystemdomain-3ujyrlm64nacrg4xkmoznl5oqy.us-east-1.es.amazonaws.com"
+OPENSEARCH_HOST = "https://search-mycarsystemdomain-3ujyrlm64nacrg4xkmoznl5oqy.us-east-1.es.amazonaws.com" # the opensearch endpoint
 INDEX_NAME = "cars_index_new"
 USERNAME = "moeuser"
 PASSWORD = "Mohamad@123"
 
-
+# Get the parameters from the settings in streamlit app
 aws_access_key = st.secrets["AWS_ACCESS_KEY_ID"]
 aws_secret_key = st.secrets["AWS_SECRET_ACCESS_KEY"]
 aws_region = st.secrets["AWS_DEFAULT_REGION"]
@@ -26,9 +26,11 @@ boto3.setup_default_session(
     region_name=aws_region
 )
 
-dynamodb = boto3.resource("dynamodb", region_name="us-east-1")  # e.g. "eu-central-1"
+# Connect and access to the dynamodb table 
+dynamodb = boto3.resource("dynamodb", region_name="us-east-1") 
 table = dynamodb.Table("CarList")
 
+# Load scaler from s3 (we need the same scaler while scale the numerical data (systemvectorizaion file))
 @st.cache_resource
 def load_scaler(url: str):
     try:
@@ -39,7 +41,8 @@ def load_scaler(url: str):
     except Exception as e:
         st.error(f"Failed to load scaler: {e}")
         return None
-
+        
+# Load onehotencoder from s3 (we need the same encoder while encode the categorical data (systemvectorizaion file))
 @st.cache_resource
 def load_onehot_encoder(url):
     try:
@@ -65,11 +68,12 @@ CATEGORICAL_FEATURES = ["BodyColor", "BodyType", "Fuel", "NumberOfDoors", "GearB
 NUMERICAL_FEATURES = ["FirstRegistration", "NumberOfSeats", "Power", "Price", "Mileage", "CubicCapacity"]
 
 
-# Initialize StandardScaler
+# Initialize StandardScaler and OneHotEncoder
 scaler_url = "https://car-recommendation-raed.s3.us-east-1.amazonaws.com/scaler/scaler.pkl"
 scaler = load_scaler(scaler_url)
 onehot_encoder_url = "https://car-recommendation-raed.s3.us-east-1.amazonaws.com/onehotencoder/onehot_encoder.pkl"
 onehot_encoder = load_onehot_encoder(onehot_encoder_url)
+
 # Function to convert user input into vector
 def preprocess_input(category, mileage, color, doors, first_reg, gearbox, price, seats, fuel_type, performance, drivetype, cubiccapacity):
     # Prepare DataFrame for categorical input (must match training order)
@@ -90,15 +94,16 @@ def preprocess_input(category, mileage, color, doors, first_reg, gearbox, price,
 
     # Combine both parts
     return np.concatenate((cat_encoded[0], numerical_scaled))
+    
 # Function to search similar cars in OpenSearch
 def search_similar_cars(query_vector):
     query = {
-        "size": 10,
+        "size": 10, # show the result to user (size <= k)
         "query": {
             "knn": {
                 "vector": {
                     "vector": query_vector.tolist(),
-                    "k": 10
+                    "k": 10  # search in the index 
                 }
             }
         }
@@ -107,7 +112,7 @@ def search_similar_cars(query_vector):
     response = client.search(index=INDEX_NAME, body=query)
     return response["hits"]["hits"]
 
-
+# Function for get the ad from the dynamodb by ID
 def get_car_by_id(car_id):
     response = table.get_item(Key={"CarID": car_id})
     return response.get("Item")
@@ -182,7 +187,7 @@ if st.button("Find Similar Cars"):
     results = search_similar_cars(query_vector)
     
     if results:
-
+        # Filtering the data depends on the choice of the user
         if gearbox_needed :
             results = [car for car in results if car["_source"].get("GearBox", "").lower() == gearbox.lower()]
 
