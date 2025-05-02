@@ -209,6 +209,7 @@ if st.button("Find Similar Cars"):
         
             if full_car_info:
                 st.write(f"📏 ID: {full_car_info['CarID']}  | 🔥 Body Type: {full_car_info.get('BodyType', 'N/A')} ")
+                st.write(f"📏 Make: {full_car_info['Make']}  | 🔥 Model: {full_car_info.get('Model', 'N/A')} ")
                 st.write(f"💡 Gearbox: {full_car_info.get('GearBox', 'N/A')} | Fuel Type : {full_car_info.get('Fuel', 'N/A')}")
                 st.write(f"💡 Body Color: {full_car_info.get('BodyColor', 'N/A')} | Doors : {full_car_info.get('NumberOfDoors', 'N/A')}")
                 st.write(f"💡 Drive Type: {full_car_info.get('DriveType', 'N/A')} | Mileage : {full_car_info.get('Mileage', 'N/A')}")
