@@ -65,7 +65,7 @@ client = OpenSearch(
 )
 
 # Define categorical and numerical features
-CATEGORICAL_FEATURES = ["BodyColor", "BodyType", "Fuel", "NumberOfDoors", "GearBox", "DriveType"]
+CATEGORICAL_FEATURES = ["BodyType", "Fuel", "NumberOfDoors", "GearBox", "DriveType"]
 NUMERICAL_FEATURES = ["FirstRegistration", "NumberOfSeats", "Power", "Price", "Mileage", "CubicCapacity"]
 
 
@@ -76,10 +76,9 @@ onehot_encoder_url = "https://car-recommendation-raed.s3.us-east-1.amazonaws.com
 onehot_encoder = load_onehot_encoder(onehot_encoder_url)
 
 # Function to convert user input into vector
-def preprocess_input(category, mileage, color, doors, first_reg, gearbox, price, seats, fuel_type, performance, drivetype, cubiccapacity):
+def preprocess_input(category, mileage, doors, first_reg, gearbox, price, seats, fuel_type, performance, drivetype, cubiccapacity):
     # Prepare DataFrame for categorical input (must match training order)
     cat_input = pd.DataFrame([{
-        "BodyColor": color,
         "BodyType": category,
         "Fuel": fuel_type,
         "NumberOfDoors": doors,
@@ -147,13 +146,6 @@ with col1:
 with col2:
     category_needed = st.checkbox("I need Body Type ?",  value=False)
 
-col1, col2 = st.columns(2)
-
-with col1:
-    color = st.selectbox("Body Color", onehot_encoder.categories_[CATEGORICAL_FEATURES.index("BodyColor")])
-    
-with col2:
-    color_needed = st.checkbox("I need Body Color ?",  value=False)
 
 col1, col2 = st.columns(2)
 
@@ -183,7 +175,7 @@ first_reg = st.slider("First Registration Year", 1995, 2025, 2005)
     
 
 if st.button("Find Similar Cars"):
-    query_vector = preprocess_input(category, mileage, color, doors, first_reg, gearbox, price, seats, fuel_type, performance, drivetype, cubiccapacity)
+    query_vector = preprocess_input(category, mileage, doors, first_reg, gearbox, price, seats, fuel_type, performance, drivetype, cubiccapacity)
     
     results = search_similar_cars(query_vector)
     
@@ -198,9 +190,6 @@ if st.button("Find Similar Cars"):
         if category_needed :
             results = [car for car in results if car["_source"].get("BodyType", "").lower() == category.lower()]
 
-        if color_needed :
-            results = [car for car in results if car["_source"].get("BodyColor", "").lower() == color.lower()]
-
         if doors_needed :
             results = [car for car in results if car["_source"].get("NumberOfDoors", "").lower() == doors.lower()]
 
@@ -214,11 +203,13 @@ if st.button("Find Similar Cars"):
             full_car_info = get_car_by_id(real_ID)
         
             if full_car_info:
-                st.write(f"📏 ID: {full_car_info['CarID']}  | 🔥 Body Type: {full_car_info.get('BodyType', 'N/A')} ")
-                st.write(f"📏 Make: {full_car_info['Make']}  | 🔥 Model: {full_car_info.get('Model', 'N/A')} ")
-                st.write(f"💡 Gearbox: {full_car_info.get('GearBox', 'N/A')} | Fuel Type : {full_car_info.get('Fuel', 'N/A')}")
-                st.write(f"💡 Body Color: {full_car_info.get('BodyColor', 'N/A')} | Doors : {full_car_info.get('NumberOfDoors', 'N/A')}")
-                st.write(f"💡 Drive Type: {full_car_info.get('DriveType', 'N/A')} | Mileage : {full_car_info.get('Mileage', 'N/A')}")
+                st.write(f"🆔 ID: {full_car_info['CarID']}  | 🔥 Body Type: {full_car_info.get('BodyType', 'N/A')} ")
+                st.write(f"📏 Make: {full_car_info['Make']}  | 📏 Model: {full_car_info.get('Model', 'N/A')} ")
+                st.write(f"⚙️ Gearbox: {full_car_info.get('GearBox', 'N/A')} | ⛽ Fuel Type : {full_car_info.get('Fuel', 'N/A')}")
+                st.write(f"💡 Body Color: {full_car_info.get('BodyColor', 'N/A')} | 🚪 Doors : {full_car_info.get('NumberOfDoors', 'N/A')}")
+                st.write(f"🚙 Drive Type: {full_car_info.get('DriveType', 'N/A')} | 🚗📏 Mileage : {full_car_info.get('Mileage', 'N/A')}")
+                st.write(f"🏁 Cubic Capacity: {full_car_info.get('CubicCapacity', 'N/A')} | ⚡ Performance : {full_car_info.get('Power', 'N/A')}")
+                st.write(f"👥 Number Of Seats: {full_car_info.get('NumberOfSeats', 'N/A')} | 🛠️ Usage State : {full_car_info.get('UsageState', 'N/A')}")
                 st.write(f"📅 First Registration: {full_car_info.get('FirstRegistration', 'N/A')} | 💰 Price: {full_car_info.get('Price', 'N/A')}")
                 st.write("---")
             else:
