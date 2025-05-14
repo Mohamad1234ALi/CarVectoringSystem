@@ -42,6 +42,17 @@ def load_scaler(url: str):
     except Exception as e:
         st.error(f"Failed to load scaler: {e}")
         return None
+
+@st.cache_resource
+def load_MinMaxscaler(url: str):
+    try:
+        response = requests.get(url)
+        response.raise_for_status()  # Raise an exception for HTTP errors
+        minmaxscaler = joblib.load(BytesIO(response.content))
+        return minmaxscaler
+    except Exception as e:
+        st.error(f"Failed to load scaler: {e}")
+        return None
         
 # Load onehotencoder from s3 (we need the same encoder while encode the categorical data (systemvectorizaion file))
 @st.cache_resource
@@ -72,6 +83,8 @@ NUMERICAL_FEATURES = ["FirstRegistration", "NumberOfSeats", "Power", "Price", "M
 # Initialize StandardScaler and OneHotEncoder
 scaler_url = "https://car-recommendation-raed.s3.us-east-1.amazonaws.com/scaler/scaler.pkl"
 scaler = load_scaler(scaler_url)
+minmax_url="https://car-recommendation-raed.s3.us-east-1.amazonaws.com/scaler/minmax_scaler.pkl"
+minmax_scaler = load_MinMaxscaler(minmax_url)
 onehot_encoder_url = "https://car-recommendation-raed.s3.us-east-1.amazonaws.com/onehotencoder/onehot_encoder.pkl"
 onehot_encoder = load_onehot_encoder(onehot_encoder_url)
 
@@ -88,12 +101,13 @@ def preprocess_input(category, mileage, doors, first_reg, gearbox, price, seats,
 
     # OneHotEncode categorical values
     cat_encoded = onehot_encoder.transform(cat_input)
-
+    
+    price_normalized = minmax_scaler.transform([[price]])[0][0]  # Normalize price with MinMaxScaler
     # Scale numerical values
-    numerical_scaled = scaler.transform([[first_reg, seats, performance, price, mileage, cubiccapacity]])[0]
+    numerical_scaled = scaler.transform([[first_reg, seats, performance, mileage, cubiccapacity]])[0]
 
     # Combine both parts
-    return np.concatenate((cat_encoded[0], numerical_scaled))
+    return np.concatenate((cat_encoded[0], numerical_scaled, [price_normalized]))
     
 # Function to search similar cars in OpenSearch
 def search_similar_cars(query_vector):
