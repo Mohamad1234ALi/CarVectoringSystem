@@ -42,17 +42,6 @@ def load_scaler(url: str):
     except Exception as e:
         st.error(f"Failed to load scaler: {e}")
         return None
-
-@st.cache_resource
-def load_MinMaxscaler(url: str):
-    try:
-        response = requests.get(url)
-        response.raise_for_status()  # Raise an exception for HTTP errors
-        minmaxscaler = joblib.load(BytesIO(response.content))
-        return minmaxscaler
-    except Exception as e:
-        st.error(f"Failed to load scaler: {e}")
-        return None
         
 # Load onehotencoder from s3 (we need the same encoder while encode the categorical data (systemvectorizaion file))
 @st.cache_resource
@@ -76,15 +65,14 @@ client = OpenSearch(
 )
 
 # Define categorical and numerical features
-CATEGORICAL_FEATURES = ["BodyType", "Fuel", "NumberOfDoors", "GearBox", "DriveType"]
-NUMERICAL_FEATURES = ["FirstRegistration", "NumberOfSeats", "Power", "Price", "Mileage", "CubicCapacity"]
+CATEGORICAL_FEATURES = ["BodyType", "Fuel", "NumberOfDoors", "GearBox", "DriveType", "NumberOfSeats"]
+NUMERICAL_FEATURES = ["FirstRegistration", "Power", "Price", "Mileage", "CubicCapacity"]
 
 
 # Initialize StandardScaler and OneHotEncoder
 scaler_url = "https://car-recommendation-raed.s3.us-east-1.amazonaws.com/scaler/scaler.pkl"
 scaler = load_scaler(scaler_url)
-minmax_url="https://car-recommendation-raed.s3.us-east-1.amazonaws.com/scaler/minmax_scaler.pkl"
-minmax_scaler = load_MinMaxscaler(minmax_url)
+
 onehot_encoder_url = "https://car-recommendation-raed.s3.us-east-1.amazonaws.com/onehotencoder/onehot_encoder.pkl"
 onehot_encoder = load_onehot_encoder(onehot_encoder_url)
 
@@ -96,18 +84,22 @@ def preprocess_input(category, mileage, doors, first_reg, gearbox, price, seats,
         "Fuel": fuel_type,
         "NumberOfDoors": doors,
         "GearBox": gearbox,
-        "DriveType": drivetype  # or any default, if not part of Streamlit inputs
+        "DriveType": drivetype,  # or any default, if not part of Streamlit inputs
+        "NumberOfSeats": seats
     }])
 
     # OneHotEncode categorical values
     cat_encoded = onehot_encoder.transform(cat_input)
-    
-    price_normalized = minmax_scaler.transform([[price]])[0][0]  # Normalize price with MinMaxScaler
-    # Scale numerical values
-    numerical_scaled = scaler.transform([[first_reg, seats, performance, mileage, cubiccapacity]])[0]
 
-    # Combine both parts
-    return np.concatenate((cat_encoded[0], numerical_scaled, [price_normalized]))
+   # Apply log1p to numerical features
+    numerical_input = [first_reg, performance, price, mileage, cubiccapacity]
+    log_transformed = np.log1p(numerical_input).reshape(1, -1)
+
+    # Apply scaler
+    numerical_scaled = scaler.transform(log_transformed)[0]
+
+    # Combine categorical + numerical
+    return np.concatenate((cat_encoded[0], numerical_scaled))
     
 # Function to search similar cars in OpenSearch
 def search_similar_cars(query_vector):
@@ -177,10 +169,17 @@ with col1:
 with col2:
     drive_needed = st.checkbox("I need Drive Type ?",  value=False)
 
+col1, col2 = st.columns(2)
+
+with col1:
+    seats = st.selectbox("Number Of Seats", onehot_encoder.categories_[CATEGORICAL_FEATURES.index("NumberOfSeats")])
+    
+with col2:
+    seats_needed = st.checkbox("I need Number Of Seats ?",  value=False)
+
 
 price = st.number_input("Price ($)", min_value=1000, max_value=100000, value=5000)
 mileage = st.number_input("Mileage (Km)", min_value=0, max_value=500000, value=10000)
-seats = st.number_input("Number Of Seats", min_value=1, max_value=10, value=4)
 performance = st.number_input("Performance", min_value=50, max_value=1000, value=100)
 cubiccapacity = st.number_input("Cubic Capacity", min_value=900, max_value=4000, value=900)
 first_reg = st.slider("First Registration Year", 1995, 2025, 2005)
@@ -209,6 +208,9 @@ if st.button("Find Similar Cars"):
 
         if drive_needed :
             results = [car for car in results if car["_source"].get("DriveType", "").lower() == drivetype.lower()]
+
+        if seats_needed :
+            results = [car for car in results if car["_source"].get("NumberOfSeats", "").lower() == seats.lower()]
             
         for car in results:
             
