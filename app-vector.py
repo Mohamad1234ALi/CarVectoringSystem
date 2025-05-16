@@ -66,7 +66,7 @@ client = OpenSearch(
 
 # Define categorical and numerical features
 CATEGORICAL_FEATURES = ["BodyType", "Fuel", "NumberOfDoors", "GearBox", "DriveType", "NumberOfSeats"]
-NUMERICAL_FEATURES = ["FirstRegistration", "Power", "Price", "Mileage", "CubicCapacity"]
+NUMERICAL_FEATURES = ["FirstRegistration", "Power", "CubicCapacity"]
 
 
 # Initialize StandardScaler and OneHotEncoder
@@ -77,7 +77,7 @@ onehot_encoder_url = "https://car-recommendation-raed.s3.us-east-1.amazonaws.com
 onehot_encoder = load_onehot_encoder(onehot_encoder_url)
 
 # Function to convert user input into vector
-def preprocess_input(category, mileage, doors, first_reg, gearbox, price, seats, fuel_type, performance, drivetype, cubiccapacity):
+def preprocess_input(category, doors, first_reg, gearbox, seats, fuel_type, performance, drivetype, cubiccapacity):
     # Prepare DataFrame for categorical input (must match training order)
     cat_input = pd.DataFrame([{
         "BodyType": category,
@@ -92,7 +92,7 @@ def preprocess_input(category, mileage, doors, first_reg, gearbox, price, seats,
     cat_encoded = onehot_encoder.transform(cat_input)
 
    # Apply log1p to numerical features
-    numerical_input = [first_reg, performance, price, mileage, cubiccapacity]
+    numerical_input = [first_reg, performance, cubiccapacity]
     log_transformed = np.log1p(numerical_input).reshape(1, -1)
 
     # Apply scaler
@@ -178,17 +178,30 @@ with col2:
     seats_needed = st.checkbox("I need Number Of Seats ?",  value=False)
 
 
-price = st.number_input("Price ($)", min_value=1000, max_value=100000, value=5000)
-mileage = st.number_input("Mileage (Km)", min_value=0, max_value=500000, value=10000)
+price_range = st.slider(
+    "Price Range ($)", 
+    min_value=500, 
+    max_value=150000, 
+    value=(5000, 30000),  # default range
+    step=1000
+)
+mileage_range = st.slider(
+    "Mileage Range (Km)", 
+    min_value=0, 
+    max_value=500000, 
+    value=(0, 100000),  # default range
+    step=1000
+)
 performance = st.number_input("Performance", min_value=50, max_value=1000, value=100)
 cubiccapacity = st.number_input("Cubic Capacity", min_value=900, max_value=4000, value=900)
 first_reg = st.slider("First Registration Year", 1995, 2025, 2005)
 
-
+price_min, price_max = price_range
+mileage_min, mileage_max = mileage_range
     
 
 if st.button("Find Similar Cars"):
-    query_vector = preprocess_input(category, mileage, doors, first_reg, gearbox, price, seats, fuel_type, performance, drivetype, cubiccapacity)
+    query_vector = preprocess_input(category, doors, first_reg, gearbox, seats, fuel_type, performance, drivetype, cubiccapacity)
     
     results = search_similar_cars(query_vector)
     
@@ -210,7 +223,19 @@ if st.button("Find Similar Cars"):
             results = [car for car in results if car["_source"].get("DriveType", "").lower() == drivetype.lower()]
 
         if seats_needed :
-            results = [car for car in results if car["_source"].get("NumberOfSeats", "").lower() == seats.lower()]
+            results = [car for car in results if car["_source"].get("NumberOfSeats", "") == seats]
+
+        # Filter by Price range
+        results = [
+            car for car in results
+            if price_min <= int(car["_source"].get("Price", 0)) <= price_max
+        ]
+
+        # Filter by Mileage range
+        results = [
+            car for car in results
+            if mileage_min <= int(car["_source"].get("Mileage", 0)) <= mileage_max
+        ]
             
         for car in results:
             
