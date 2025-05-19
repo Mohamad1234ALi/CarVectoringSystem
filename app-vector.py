@@ -92,15 +92,14 @@ def preprocess_input(category, doors, first_reg, gearbox, seats, fuel_type, perf
     cat_encoded = onehot_encoder.transform(cat_input)
 
    # Apply log1p to numerical features
-    #numerical_input = [first_reg, performance, cubiccapacity]
-    #log_transformed = np.log1p(numerical_input).reshape(1, -1)
+    numerical_input = [first_reg, performance, cubiccapacity]
+    log_transformed = np.log1p(numerical_input).reshape(1, -1)
 
     # Apply scaler
-    #numerical_scaled = scaler.transform(log_transformed)[0]
+    numerical_scaled = scaler.transform(log_transformed)[0]
 
     # Combine categorical + numerical
-    #return np.concatenate((cat_encoded[0]))
-    return cat_encoded[0]
+    return np.concatenate((cat_encoded[0], numerical_scaled))
     
 # Function to search similar cars in OpenSearch
 def search_similar_cars(query_vector):
