@@ -104,12 +104,12 @@ def preprocess_input(category, doors, first_reg, gearbox, seats, fuel_type, perf
 # Function to search similar cars in OpenSearch
 def search_similar_cars(query_vector):
     query = {
-        "size": 10, # how many result showing to user (size <= k)
+        "size": 50, # how many result showing to user (size <= k)
         "query": {
             "knn": {
                 "vector": {
                     "vector": query_vector.tolist(),
-                    "k": 10  #  how many k search in the index (table)
+                    "k": 50  #  how many k search in the index (table)
                 }
             }
         }
