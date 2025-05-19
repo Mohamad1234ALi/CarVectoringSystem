@@ -92,14 +92,14 @@ def preprocess_input(category, doors, first_reg, gearbox, seats, fuel_type, perf
     cat_encoded = onehot_encoder.transform(cat_input)
 
    # Apply log1p to numerical features
-    numerical_input = [first_reg, performance, cubiccapacity]
-    log_transformed = np.log1p(numerical_input).reshape(1, -1)
+    #numerical_input = [first_reg, performance, cubiccapacity]
+    #log_transformed = np.log1p(numerical_input).reshape(1, -1)
 
     # Apply scaler
-    numerical_scaled = scaler.transform(log_transformed)[0]
+    #numerical_scaled = scaler.transform(log_transformed)[0]
 
     # Combine categorical + numerical
-    return np.concatenate((cat_encoded[0], numerical_scaled))
+    return np.concatenate((cat_encoded[0]))
     
 # Function to search similar cars in OpenSearch
 def search_similar_cars(query_vector):
@@ -226,16 +226,16 @@ if st.button("Find Similar Cars"):
             results = [car for car in results if car["_source"].get("NumberOfSeats", "") == seats]
 
         # Filter by Price range
-        results = [
-            car for car in results
-            if price_min <= int(car["_source"].get("Price", 0)) <= price_max
-        ]
+       # results = [
+            #car for car in results
+            #if price_min <= int(car["_source"].get("Price", 0)) <= price_max
+        #]
 
         # Filter by Mileage range
-        results = [
-            car for car in results
-            if mileage_min <= int(car["_source"].get("Mileage", 0)) <= mileage_max
-        ]
+       # results = [
+            #car for car in results
+           # if mileage_min <= int(car["_source"].get("Mileage", 0)) <= mileage_max
+       # ]
             
         for car in results:
             
