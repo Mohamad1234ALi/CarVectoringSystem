@@ -103,28 +103,62 @@ def preprocess_input(category, doors, first_reg, gearbox, seats, fuel_type, perf
     return np.concatenate((cat_encoded[0], numerical_scaled))
     
 # Function to search similar cars in OpenSearch
-def search_similar_cars(query_vector,numberofcars,similarity_threshold=0.7):
+
+def search_similar_cars_with_filters(
+    query_vector, 
+    numberofcars, 
+    price_min, price_max, 
+    mileage_min,mileage_max, 
+    similarity_threshold=0.7
+):
+  
+    # Build the range filters list
+    filters = []
+    if price_min is not None or price_max is not None:
+        price_range = {}
+        if price_min is not None:
+            price_range["gte"] = price_min
+        if price_max is not None:
+            price_range["lte"] = price_max
+        filters.append({"range": {"Price": price_range}})
+
+    if mileage_min is not None or mileage_max is not None:
+        mileage_range = {}
+        if mileage_min is not None:
+            mileage_range["gte"] = mileage_min
+        if mileage_max is not None:
+            mileage_range["lte"] = mileage_max
+        filters.append({"range": {"Mileage": mileage_range}})
+
+    # Construct the query with bool filter and knn must
     query = {
-        "size": numberofcars, # how many result showing to user (size <= k)
+        "size": numberofcars,
         "query": {
-            "knn": {
-                "vector": {
-                    "vector": query_vector.tolist(),
-                    "k": numberofcars  #  how many k search in the index (table)
+            "bool": {
+                "filter": filters,
+                "must": {
+                    "knn": {
+                        "vector": {
+                            "vector": query_vector.tolist(),
+                            "k": numberofcars
+                        }
+                    }
                 }
             }
         }
     }
 
+    # Execute the search
     response = client.search(index=INDEX_NAME, body=query)
     results = response["hits"]["hits"]
 
-    # Filter by similarity threshold
-    filtered = [r for r in results if  r["_score"] >= similarity_threshold]
-    #random.shuffle(filtered) 
-    #sorted_filtered = sorted(filtered, key=lambda r: r["_score"])
+    # Optional: filter results by similarity threshold on _score
+    filtered = [r for r in results if r["_score"] >= similarity_threshold]
+
     shuffled = random.sample(filtered, len(filtered))
     return shuffled
+
+
 
 # Function for get the ad from the dynamodb by ID
 def get_car_by_id(car_id):
@@ -216,7 +250,7 @@ mileage_min, mileage_max = mileage_range
 if st.button("Find Similar Cars"):
     query_vector = preprocess_input(category, doors, first_reg, gearbox, seats, fuel_type, performance, drivetype, cubiccapacity)
     
-    results = search_similar_cars(query_vector,numberofcars, similarity_threshold=0.7)
+    results = search_similar_cars_with_filters(query_vector,numberofcars,price_min,price_max,mileage_min,mileage_max, similarity_threshold=0.7)
     count = len(results)
     st.write(f"🔍 Found {count} similar cars")
     
@@ -241,19 +275,7 @@ if st.button("Find Similar Cars"):
             results = [car for car in results if car["_source"].get("NumberOfSeats", "") == seats]
 
       
-        results = [
-            car for car in results
-            if price_min <= int(car["_source"].get("Price", 0)) <= price_max
-        ]
-
-       
-        results = [
-            car for car in results
-            if mileage_min <= int(car["_source"].get("Mileage", 0)) <= mileage_max
-        ]
-       
-        count2 = len(results)
-        st.write(f"🔍 Found {count2} similar cars after filter")
+ 
         st.markdown("<br>", unsafe_allow_html=True)
         for car in results:
             
