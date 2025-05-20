@@ -172,56 +172,24 @@ st.write("Find similar cars 🔍")
 
 numberofcars = st.number_input("Number Of Cars Searched", min_value=10, max_value=200, value=50)
 
-col1, col2 = st.columns(2)
+
 
 # User Inputs
 
-with col1:
-   gearbox = st.selectbox("Gearbox", onehot_encoder.categories_[CATEGORICAL_FEATURES.index("GearBox")])
+
+gearbox = st.selectbox("Gearbox", onehot_encoder.categories_[CATEGORICAL_FEATURES.index("GearBox")])
+
+fuel_type = st.selectbox("Fuel Type", onehot_encoder.categories_[CATEGORICAL_FEATURES.index("Fuel")])
     
-with col2:
-   #gearbox_needed = st.checkbox("I need Gearbox?", value=False)
-
-col1, col2 = st.columns(2)
-
-with col1:
-    fuel_type = st.selectbox("Fuel Type", onehot_encoder.categories_[CATEGORICAL_FEATURES.index("Fuel")])
+category = st.selectbox("Body Type", onehot_encoder.categories_[CATEGORICAL_FEATURES.index("BodyType")])
     
-with col2:
-    #fuel_needed = st.checkbox("I need Fuel ?",  value=False)
+doors = st.selectbox("Number Of Doors", onehot_encoder.categories_[CATEGORICAL_FEATURES.index("NumberOfDoors")])
 
-col1, col2 = st.columns(2)
-
-with col1:
-    category = st.selectbox("Body Type", onehot_encoder.categories_[CATEGORICAL_FEATURES.index("BodyType")])
+drivetype = st.selectbox("Drive Type", onehot_encoder.categories_[CATEGORICAL_FEATURES.index("DriveType")])
     
-with col2:
-    #category_needed = st.checkbox("I need Body Type ?",  value=False)
-
-
-col1, col2 = st.columns(2)
-
-with col1:
-    doors = st.selectbox("Number Of Doors", onehot_encoder.categories_[CATEGORICAL_FEATURES.index("NumberOfDoors")])
+seats = st.selectbox("Number Of Seats", onehot_encoder.categories_[CATEGORICAL_FEATURES.index("NumberOfSeats")])
     
-with col2:
-    #doors_needed = st.checkbox("I need Doors ?",  value=False)
 
-col1, col2 = st.columns(2)
-
-with col1:
-    drivetype = st.selectbox("Drive Type", onehot_encoder.categories_[CATEGORICAL_FEATURES.index("DriveType")])
-    
-with col2:
-    #drive_needed = st.checkbox("I need Drive Type ?",  value=False)
-
-col1, col2 = st.columns(2)
-
-with col1:
-    seats = st.selectbox("Number Of Seats", onehot_encoder.categories_[CATEGORICAL_FEATURES.index("NumberOfSeats")])
-    
-with col2:
-    #seats_needed = st.checkbox("I need Number Of Seats ?",  value=False)
 
 
 price_range = st.slider(
