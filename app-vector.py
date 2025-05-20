@@ -240,19 +240,20 @@ if st.button("Find Similar Cars"):
         if seats_needed :
             results = [car for car in results if car["_source"].get("NumberOfSeats", "") == seats]
 
-        # Filter by Price range
-       # results = [
-            #car for car in results
-            #if price_min <= int(car["_source"].get("Price", 0)) <= price_max
-        #]
+      
+        results = [
+            car for car in results
+            if price_min <= int(car["_source"].get("Price", 0)) <= price_max
+        ]
 
-        # Filter by Mileage range
-       # results = [
-            #car for car in results
-           # if mileage_min <= int(car["_source"].get("Mileage", 0)) <= mileage_max
-       # ]
        
-        
+        results = [
+            car for car in results
+            if mileage_min <= int(car["_source"].get("Mileage", 0)) <= mileage_max
+        ]
+       
+        count2 = len(results)
+        st.write(f"🔍 Found {count2} similar cars after filter")
         for car in results:
             
             car_data = car["_source"]       
