@@ -102,7 +102,7 @@ def preprocess_input(category, doors, first_reg, gearbox, seats, fuel_type, perf
     return np.concatenate((cat_encoded[0], numerical_scaled))
     
 # Function to search similar cars in OpenSearch
-def search_similar_cars(query_vector,similarity_threshold=0.7):
+def search_similar_cars(query_vector,similarity_threshold=0.8):
     query = {
         "size": 50, # how many result showing to user (size <= k)
         "query": {
@@ -119,8 +119,7 @@ def search_similar_cars(query_vector,similarity_threshold=0.7):
     results = response["hits"]["hits"]
 
     # Filter by similarity threshold
-    filtered = [r for r in results if r["_score"] >= similarity_threshold]
-
+    filtered = [r for r in results if 0.6 <= r["_score"] <= similarity_threshold]
     return filtered
 
 # Function for get the ad from the dynamodb by ID
@@ -208,7 +207,9 @@ mileage_min, mileage_max = mileage_range
 if st.button("Find Similar Cars"):
     query_vector = preprocess_input(category, doors, first_reg, gearbox, seats, fuel_type, performance, drivetype, cubiccapacity)
     
-    results = search_similar_cars(query_vector, similarity_threshold=0.7)
+    results = search_similar_cars(query_vector, similarity_threshold=0.8)
+    count = len(results)
+    st.write(f"🔍 Found {count} similar cars")
     
     if results:
         # Filtering the data depends on the choice of the user
@@ -241,7 +242,8 @@ if st.button("Find Similar Cars"):
             #car for car in results
            # if mileage_min <= int(car["_source"].get("Mileage", 0)) <= mileage_max
        # ]
-            
+       
+        
         for car in results:
             
             car_data = car["_source"]       
