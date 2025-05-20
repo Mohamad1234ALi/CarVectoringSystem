@@ -122,8 +122,9 @@ def search_similar_cars(query_vector,numberofcars,similarity_threshold=0.7):
     # Filter by similarity threshold
     filtered = [r for r in results if  r["_score"] >= similarity_threshold]
     #random.shuffle(filtered) 
-    sorted_filtered = sorted(filtered, key=lambda r: r["_score"])
-    return sorted_filtered
+    #sorted_filtered = sorted(filtered, key=lambda r: r["_score"])
+    shuffled = random.sample(filtered, len(filtered))
+    return shuffled
 
 # Function for get the ad from the dynamodb by ID
 def get_car_by_id(car_id):
@@ -133,6 +134,10 @@ def get_car_by_id(car_id):
 # Streamlit UI
 st.title("Car Recommendation System 🚗")
 st.write("Find similar cars 🔍")
+
+
+numberofcars = st.number_input("Number Of Cars Searched", min_value=10, max_value=200, value=50)
+
 col1, col2 = st.columns(2)
 
 # User Inputs
@@ -202,7 +207,7 @@ mileage_range = st.slider(
 first_reg = st.slider("First Registration Year", 1995, 2025, 2005)
 performance = st.number_input("Performance", min_value=50, max_value=1000, value=100)
 cubiccapacity = st.number_input("Cubic Capacity", min_value=900, max_value=4000, value=900)
-numberofcars = st.number_input("Number Of Cars Searched", min_value=10, max_value=200, value=50)
+
 
 price_min, price_max = price_range
 mileage_min, mileage_max = mileage_range
