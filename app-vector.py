@@ -257,7 +257,7 @@ if st.button("Find Similar Cars"):
                 st.write(f"🏁 Cubic Capacity: {full_car_info.get('CubicCapacity', 'N/A')} | ⚡ Performance : {full_car_info.get('Power', 'N/A')}")
                 st.write(f"👥 Number Of Seats: {full_car_info.get('NumberOfSeats', 'N/A')} | 🛠️ Usage State : {full_car_info.get('UsageState', 'N/A')}")
                 st.write(f"📅 First Registration: {full_car_info.get('FirstRegistration', 'N/A')} | 💰 Price: {full_car_info.get('Price', 'N/A')}")
-                st.write(f"📅 Score : {car["_score"]}
+                st.write(f"📅 Score : {car['_score']}
                 st.write("---")
             else:
                  st.write(f"❌ Car with ID {real_ID} not found in DynamoDB.")
