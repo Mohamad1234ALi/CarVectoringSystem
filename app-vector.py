@@ -156,7 +156,26 @@ def search_similar_cars_with_filters(
     filtered = [r for r in results if r["_score"] >= similarity_threshold]
 
     #shuffled = random.sample(filtered, len(filtered))
-    return filtered
+    # Buckets based on _score
+    bucket1 = [r for r in filtered if 0.70 <= r["_score"] < 0.80]
+    bucket2 = [r for r in filtered if 0.80 <= r["_score"] < 0.90]
+    bucket3 = [r for r in filtered if 0.90 <= r["_score"] <= 0.99]
+
+    # Shuffle within each bucket to randomize
+    random.shuffle(bucket1)
+    random.shuffle(bucket2)
+    random.shuffle(bucket3)
+
+    total_to_show = len(filtered)
+    # Select counts based on distribution
+    n1 = int(total_to_show * 0.5)  # 50%
+    n2 = int(total_to_show * 0.25)  # 25%
+    n3 = total_to_show - n1 - n2   # remaining 25%
+
+    # Take from each bucket up to the max allowed
+    result = bucket1[:n1] + bucket2[:n2] + bucket3[:n3]
+    return result
+  
 
 
 
