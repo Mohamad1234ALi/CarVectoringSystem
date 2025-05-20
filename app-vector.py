@@ -123,7 +123,7 @@ def search_similar_cars(query_vector,numberofcars,similarity_threshold=0.7):
     filtered = [r for r in results if  r["_score"] >= similarity_threshold]
     #random.shuffle(filtered) 
     sorted_filtered = sorted(filtered, key=lambda r: r["_score"])
-    return filtered
+    return sorted_filtered
 
 # Function for get the ad from the dynamodb by ID
 def get_car_by_id(car_id):
