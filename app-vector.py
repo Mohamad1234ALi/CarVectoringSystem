@@ -170,7 +170,7 @@ st.title("Car Recommendation System 🚗")
 st.write("Find similar cars 🔍")
 
 
-numberofcars = st.number_input("Number Of Cars Searched", min_value=10, max_value=200, value=50)
+numberofcars = st.number_input("Number Of Cars Searched", min_value=10, max_value=5000, value=100)
 
 
 
