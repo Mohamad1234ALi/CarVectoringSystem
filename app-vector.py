@@ -102,14 +102,14 @@ def preprocess_input(category, doors, first_reg, gearbox, seats, fuel_type, perf
     return np.concatenate((cat_encoded[0], numerical_scaled))
     
 # Function to search similar cars in OpenSearch
-def search_similar_cars(query_vector,similarity_threshold=0.8):
+def search_similar_cars(query_vector,similarity_threshold=0.8,numberofcars):
     query = {
-        "size": 50, # how many result showing to user (size <= k)
+        "size": numberofcars, # how many result showing to user (size <= k)
         "query": {
             "knn": {
                 "vector": {
                     "vector": query_vector.tolist(),
-                    "k": 50  #  how many k search in the index (table)
+                    "k": numberofcars  #  how many k search in the index (table)
                 }
             }
         }
@@ -119,7 +119,7 @@ def search_similar_cars(query_vector,similarity_threshold=0.8):
     results = response["hits"]["hits"]
 
     # Filter by similarity threshold
-    filtered = [r for r in results if 0.7 <= r["_score"] <= similarity_threshold]
+    filtered = [r for r in results if  r["_score"] <= similarity_threshold]
     return filtered
 
 # Function for get the ad from the dynamodb by ID
@@ -196,9 +196,10 @@ mileage_range = st.slider(
     value=(0, 100000),  # default range
     step=1000
 )
+first_reg = st.slider("First Registration Year", 1995, 2025, 2005)
 performance = st.number_input("Performance", min_value=50, max_value=1000, value=100)
 cubiccapacity = st.number_input("Cubic Capacity", min_value=900, max_value=4000, value=900)
-first_reg = st.slider("First Registration Year", 1995, 2025, 2005)
+numberofcars = st.number_input("Number Of Cars Searched", min_value=10, max_value=200, value=50)
 
 price_min, price_max = price_range
 mileage_min, mileage_max = mileage_range
@@ -207,7 +208,7 @@ mileage_min, mileage_max = mileage_range
 if st.button("Find Similar Cars"):
     query_vector = preprocess_input(category, doors, first_reg, gearbox, seats, fuel_type, performance, drivetype, cubiccapacity)
     
-    results = search_similar_cars(query_vector, similarity_threshold=0.8)
+    results = search_similar_cars(query_vector, similarity_threshold=0.8,numberofcars)
     count = len(results)
     st.write(f"🔍 Found {count} similar cars")
     
