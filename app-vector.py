@@ -102,7 +102,7 @@ def preprocess_input(category, doors, first_reg, gearbox, seats, fuel_type, perf
     return np.concatenate((cat_encoded[0], numerical_scaled))
     
 # Function to search similar cars in OpenSearch
-def search_similar_cars(query_vector,similarity_threshold=0.8,numberofcars):
+def search_similar_cars(query_vector,numberofcars,similarity_threshold=0.8):
     query = {
         "size": numberofcars, # how many result showing to user (size <= k)
         "query": {
@@ -208,7 +208,7 @@ mileage_min, mileage_max = mileage_range
 if st.button("Find Similar Cars"):
     query_vector = preprocess_input(category, doors, first_reg, gearbox, seats, fuel_type, performance, drivetype, cubiccapacity)
     
-    results = search_similar_cars(query_vector, similarity_threshold=0.8,numberofcars)
+    results = search_similar_cars(query_vector,numberofcars, similarity_threshold=0.8)
     count = len(results)
     st.write(f"🔍 Found {count} similar cars")
     
