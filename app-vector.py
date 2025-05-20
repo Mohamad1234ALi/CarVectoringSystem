@@ -254,6 +254,7 @@ if st.button("Find Similar Cars"):
        
         count2 = len(results)
         st.write(f"🔍 Found {count2} similar cars after filter")
+        st.markdown("<br>", unsafe_allow_html=True)
         for car in results:
             
             car_data = car["_source"]       
