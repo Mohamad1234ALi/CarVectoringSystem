@@ -102,7 +102,7 @@ def preprocess_input(category, doors, first_reg, gearbox, seats, fuel_type, perf
     return np.concatenate((cat_encoded[0], numerical_scaled))
     
 # Function to search similar cars in OpenSearch
-def search_similar_cars(query_vector):
+def search_similar_cars(query_vector,similarity_threshold=0.7):
     query = {
         "size": 50, # how many result showing to user (size <= k)
         "query": {
@@ -116,7 +116,12 @@ def search_similar_cars(query_vector):
     }
 
     response = client.search(index=INDEX_NAME, body=query)
-    return response["hits"]["hits"]
+    results = response["hits"]["hits"]
+
+    # Filter by similarity threshold
+    filtered = [r for r in results if r["_score"] >= similarity_threshold]
+
+    return filtered
 
 # Function for get the ad from the dynamodb by ID
 def get_car_by_id(car_id):
@@ -203,7 +208,7 @@ mileage_min, mileage_max = mileage_range
 if st.button("Find Similar Cars"):
     query_vector = preprocess_input(category, doors, first_reg, gearbox, seats, fuel_type, performance, drivetype, cubiccapacity)
     
-    results = search_similar_cars(query_vector)
+    results = search_similar_cars(query_vector, similarity_threshold=0.7)
     
     if results:
         # Filtering the data depends on the choice of the user
@@ -252,6 +257,7 @@ if st.button("Find Similar Cars"):
                 st.write(f"🏁 Cubic Capacity: {full_car_info.get('CubicCapacity', 'N/A')} | ⚡ Performance : {full_car_info.get('Power', 'N/A')}")
                 st.write(f"👥 Number Of Seats: {full_car_info.get('NumberOfSeats', 'N/A')} | 🛠️ Usage State : {full_car_info.get('UsageState', 'N/A')}")
                 st.write(f"📅 First Registration: {full_car_info.get('FirstRegistration', 'N/A')} | 💰 Price: {full_car_info.get('Price', 'N/A')}")
+                st.write(f"📅 Score : {car["_score"]}
                 st.write("---")
             else:
                  st.write(f"❌ Car with ID {real_ID} not found in DynamoDB.")
