@@ -203,7 +203,7 @@ mileage_range = st.slider(
     "Mileage Range (Km)", 
     min_value=0, 
     max_value=500000, 
-    value=(0, 100000),  # default range
+    value=(0, 150000),  # default range
     step=1000
 )
 first_reg = st.slider("First Registration Year", 1995, 2025, 2005)
