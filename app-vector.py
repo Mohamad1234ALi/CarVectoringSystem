@@ -196,7 +196,7 @@ price_range = st.slider(
     "Price Range ($)", 
     min_value=500, 
     max_value=150000, 
-    value=(5000, 30000),  # default range
+    value=(2000, 30000),  # default range
     step=1000
 )
 mileage_range = st.slider(
