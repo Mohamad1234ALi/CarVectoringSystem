@@ -189,7 +189,8 @@ drivetype = st.selectbox("Drive Type", onehot_encoder.categories_[CATEGORICAL_FE
     
 seats = st.selectbox("Number Of Seats", onehot_encoder.categories_[CATEGORICAL_FEATURES.index("NumberOfSeats")])
     
-
+performance = st.number_input("Performance", min_value=50, max_value=1000, value=100)
+cubiccapacity = st.number_input("Cubic Capacity", min_value=900, max_value=4000, value=900)
 
 
 price_range = st.slider(
@@ -207,8 +208,7 @@ mileage_range = st.slider(
     step=1000
 )
 first_reg = st.slider("First Registration Year", 1995, 2025, 2005)
-performance = st.number_input("Performance", min_value=50, max_value=1000, value=100)
-cubiccapacity = st.number_input("Cubic Capacity", min_value=900, max_value=4000, value=900)
+
 
 
 price_min, price_max = price_range
