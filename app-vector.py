@@ -83,9 +83,6 @@ response.raise_for_status()  # to catch HTTP errors
 
 categories_list = response.json()  # load JSON content directly
 
-
-dummy_input = np.array(categories_list).T  # Shape: [num_categories, num_features]
-
 # Step 2: Rebuild and fit encoder
 onehot_encoder = OneHotEncoder(categories=categories_list, handle_unknown='ignore', sparse_output=False)
 
