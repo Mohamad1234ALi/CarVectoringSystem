@@ -76,7 +76,15 @@ scaler_url = "https://car-recommendation-raed.s3.us-east-1.amazonaws.com/scaler/
 scaler = load_scaler(scaler_url)
 
 onehot_encoder_url = "https://car-recommendation-raed.s3.us-east-1.amazonaws.com/onehotencoder/onehot_encoder.pkl"
-onehot_encoder = load_onehot_encoder(onehot_encoder_url)
+#onehot_encoder = load_onehot_encoder(onehot_encoder_url)
+
+url = "https://car-recommendation-raed.s3.us-east-1.amazonaws.com/onehotencoder/categories_list.json"
+
+response = requests.get(url)
+response.raise_for_status()  # to catch HTTP errors
+
+categories_list = response.json()  # load JSON content directly
+onehot_encoder = OneHotEncoder(categories=categories_list, handle_unknown='ignore', sparse_output=False)
 
 # Function to convert user input into vector
 def preprocess_input(category, doors, first_reg, gearbox, seats, fuel_type, performance, drivetype, cubiccapacity):
@@ -179,17 +187,12 @@ numberofcars = st.number_input("Number of cars to be searched", min_value=10, ma
 # User Inputs
 
 
-gearbox = st.selectbox("Gearbox", onehot_encoder.categories_[CATEGORICAL_FEATURES.index("GearBox")])
-
-fuel_type = st.selectbox("Fuel Type", onehot_encoder.categories_[CATEGORICAL_FEATURES.index("Fuel")])
-    
-category = st.selectbox("Body Type", onehot_encoder.categories_[CATEGORICAL_FEATURES.index("BodyType")])
-    
-doors = st.selectbox("Number Of Doors", onehot_encoder.categories_[CATEGORICAL_FEATURES.index("NumberOfDoors")])
-
-drivetype = st.selectbox("Drive Type", onehot_encoder.categories_[CATEGORICAL_FEATURES.index("DriveType")])
-    
-seats = st.selectbox("Number Of Seats", onehot_encoder.categories_[CATEGORICAL_FEATURES.index("NumberOfSeats")])
+category = st.selectbox("Body Type", categories_list[CATEGORICAL_FEATURES.index("BodyType")])
+fuel_type = st.selectbox("Fuel Type", categories_list[CATEGORICAL_FEATURES.index("Fuel")])
+doors = st.selectbox("Number Of Doors", categories_list[CATEGORICAL_FEATURES.index("NumberOfDoors")])
+gearbox = st.selectbox("Gearbox", categories_list[CATEGORICAL_FEATURES.index("GearBox")])
+drivetype = st.selectbox("Drive Type", categories_list[CATEGORICAL_FEATURES.index("DriveType")])
+seats = st.selectbox("Number Of Seats", categories_list[CATEGORICAL_FEATURES.index("NumberOfSeats")])
     
 performance = st.number_input("Performance", min_value=50, max_value=1000, value=100)
 cubiccapacity = st.number_input("Cubic Capacity", min_value=900, max_value=4000, value=900)
