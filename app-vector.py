@@ -77,14 +77,11 @@ scaler = load_scaler(scaler_url)
 
 #onehot_encoder_url = "https://car-recommendation-raed.s3.us-east-1.amazonaws.com/onehotencoder/onehot_encoder.pkl"
 #onehot_encoder = load_onehot_encoder(onehot_encoder_url)
+url_list="https://car-recommendation-raed.s3.us-east-1.amazonaws.com/onehotencoder/categories_list.json"
+response = requests.get(url_list)
+response.raise_for_status()  # to catch HTTP errors
 
-bucket_name = "car-recommendation-raed"
-object_key = "onehotencoder/categories_list.json"
-
-# Load JSON file from S3
-s3 = boto3.client("s3")
-response = s3.get_object(Bucket=bucket_name, Key=object_key)
-categories_list = json.loads(response["Body"].read().decode("utf-8"))
+categories_list = response.json()  # load JSON content directly
 
 
 dummy_input = np.array(categories_list).T  # Shape: [num_categories, num_features]
