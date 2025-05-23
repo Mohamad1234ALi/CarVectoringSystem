@@ -75,17 +75,8 @@ NUMERICAL_FEATURES = ["FirstRegistration", "Power", "CubicCapacity"]
 scaler_url = "https://car-recommendation-raed.s3.us-east-1.amazonaws.com/scaler/scaler.pkl"
 scaler = load_scaler(scaler_url)
 
-#onehot_encoder_url = "https://car-recommendation-raed.s3.us-east-1.amazonaws.com/onehotencoder/onehot_encoder.pkl"
-#onehot_encoder = load_onehot_encoder(onehot_encoder_url)
-url_list="https://car-recommendation-raed.s3.us-east-1.amazonaws.com/onehotencoder/categories_list.json"
-response = requests.get(url_list)
-response.raise_for_status()  # to catch HTTP errors
-
-categories_list = response.json()  # load JSON content directly
-
-# Step 2: Rebuild and fit encoder
-onehot_encoder = OneHotEncoder(categories=categories_list, handle_unknown='ignore', sparse_output=False)
-
+onehot_encoder_url = "https://car-recommendation-raed.s3.us-east-1.amazonaws.com/onehotencoder/onehot_encoder.pkl"
+onehot_encoder = load_onehot_encoder(onehot_encoder_url)
 
 # Function to convert user input into vector
 def preprocess_input(category, doors, first_reg, gearbox, seats, fuel_type, performance, drivetype, cubiccapacity):
