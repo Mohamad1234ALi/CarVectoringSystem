@@ -88,7 +88,7 @@ dummy_input = np.array(categories_list).T  # Shape: [num_categories, num_feature
 
 # Step 2: Rebuild and fit encoder
 onehot_encoder = OneHotEncoder(categories=categories_list, handle_unknown='ignore', sparse_output=False)
-onehot_encoder.fit(dummy_input)
+
 
 # Function to convert user input into vector
 def preprocess_input(category, doors, first_reg, gearbox, seats, fuel_type, performance, drivetype, cubiccapacity):
