@@ -84,7 +84,13 @@ response = requests.get(url)
 response.raise_for_status()  # to catch HTTP errors
 
 categories_list = response.json()  # load JSON content directly
+
+
+dummy_input = pd.DataFrame(np.array(categories_list).T, columns=CATEGORICAL_FEATURES)
+
+# Fit OneHotEncoder
 onehot_encoder = OneHotEncoder(categories=categories_list, handle_unknown='ignore', sparse_output=False)
+onehot_encoder.fit(dummy_input)
 
 # Function to convert user input into vector
 def preprocess_input(category, doors, first_reg, gearbox, seats, fuel_type, performance, drivetype, cubiccapacity):
