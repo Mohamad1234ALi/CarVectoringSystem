@@ -2,6 +2,7 @@ import streamlit as st
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder, MinMaxScaler
+from sklearn.preprocessing import OneHotEncoder
 from opensearchpy import OpenSearch
 from io import StringIO
 import requests
@@ -74,8 +75,23 @@ NUMERICAL_FEATURES = ["FirstRegistration", "Power", "CubicCapacity"]
 scaler_url = "https://car-recommendation-raed.s3.us-east-1.amazonaws.com/scaler/scaler.pkl"
 scaler = load_scaler(scaler_url)
 
-onehot_encoder_url = "https://car-recommendation-raed.s3.us-east-1.amazonaws.com/onehotencoder/onehot_encoder.pkl"
-onehot_encoder = load_onehot_encoder(onehot_encoder_url)
+#onehot_encoder_url = "https://car-recommendation-raed.s3.us-east-1.amazonaws.com/onehotencoder/onehot_encoder.pkl"
+#onehot_encoder = load_onehot_encoder(onehot_encoder_url)
+
+bucket_name = "car-recommendation-raed"
+object_key = "onehotencoder/categories_list.json"
+
+# Load JSON file from S3
+s3 = boto3.client("s3")
+response = s3.get_object(Bucket=bucket_name, Key=object_key)
+categories_list = json.loads(response["Body"].read().decode("utf-8"))
+
+
+dummy_input = np.array(categories_list).T  # Shape: [num_categories, num_features]
+
+# Step 2: Rebuild and fit encoder
+onehot_encoder = OneHotEncoder(categories=categories_list, handle_unknown='ignore', sparse_output=False)
+onehot_encoder.fit(dummy_input)
 
 # Function to convert user input into vector
 def preprocess_input(category, doors, first_reg, gearbox, seats, fuel_type, performance, drivetype, cubiccapacity):
@@ -89,7 +105,8 @@ def preprocess_input(category, doors, first_reg, gearbox, seats, fuel_type, perf
         "NumberOfSeats": seats
     }])
 
-
+    # OneHotEncode categorical values
+    cat_encoded = onehot_encoder.transform(cat_input)
 
    # Apply log1p to numerical features
     numerical_input = [first_reg, performance, cubiccapacity]
@@ -98,8 +115,7 @@ def preprocess_input(category, doors, first_reg, gearbox, seats, fuel_type, perf
     # Apply scaler
     numerical_scaled = scaler.transform(log_transformed)[0]
     
-    # OneHotEncode categorical values
-    cat_encoded = onehot_encoder.transform(cat_input)
+  
     # Combine categorical + numerical
     return np.concatenate((cat_encoded[0], numerical_scaled))
     
