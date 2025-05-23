@@ -86,9 +86,12 @@ response.raise_for_status()  # to catch HTTP errors
 categories_list = response.json()  # load JSON content directly
 
 
-dummy_input = pd.DataFrame(np.array(categories_list).T, columns=CATEGORICAL_FEATURES)
+dummy_input = pd.DataFrame(
+    list(zip(*categories_list)),  # transpose so each row has one value from each feature
+    columns=CATEGORICAL_FEATURES
+)
 
-# Fit OneHotEncoder
+# Now fit the encoder
 onehot_encoder = OneHotEncoder(categories=categories_list, handle_unknown='ignore', sparse_output=False)
 onehot_encoder.fit(dummy_input)
 
