@@ -89,8 +89,7 @@ def preprocess_input(category, doors, first_reg, gearbox, seats, fuel_type, perf
         "NumberOfSeats": seats
     }])
 
-    # OneHotEncode categorical values
-    cat_encoded = onehot_encoder.transform(cat_input)
+
 
    # Apply log1p to numerical features
     numerical_input = [first_reg, performance, cubiccapacity]
@@ -98,7 +97,9 @@ def preprocess_input(category, doors, first_reg, gearbox, seats, fuel_type, perf
 
     # Apply scaler
     numerical_scaled = scaler.transform(log_transformed)[0]
-
+    
+    # OneHotEncode categorical values
+    cat_encoded = onehot_encoder.transform(cat_input)
     # Combine categorical + numerical
     return np.concatenate((cat_encoded[0], numerical_scaled))
     
