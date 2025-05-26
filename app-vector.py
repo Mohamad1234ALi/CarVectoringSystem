@@ -176,7 +176,43 @@ def search_similar_cars_with_filters(
     random.shuffle(filtered)
     return filtered
   
+def search_count_Filter(
+    client,
+    index_name,
+    price_min, price_max, 
+    mileage_min,mileage_max,
+):
+    # Build filter conditions
+    filters = []
 
+    if price_min is not None or price_max is not None:
+        price_range = {}
+        if price_min is not None:
+            price_range["gte"] = price_min
+        if price_max is not None:
+            price_range["lte"] = price_max
+        filters.append({"range": {"Price": price_range}})
+
+    if mileage_min is not None or mileage_max is not None:
+        mileage_range = {}
+        if mileage_min is not None:
+            mileage_range["gte"] = mileage_min
+        if mileage_max is not None:
+            mileage_range["lte"] = mileage_max
+        filters.append({"range": {"Mileage": mileage_range}})
+
+    # 🔢 Count how many cars match the filters only (before KNN)
+    count_query = {
+        "query": {
+            "bool": {
+                "filter": filters
+            }
+        }
+    }
+    filter_count = client.count(index=INDEX_NAME, body=count_query)["count"]
+
+    
+    return filter_count
 
 
 # Function for get the ad from the dynamodb by ID
@@ -230,6 +266,18 @@ mileage_min, mileage_max = mileage_range
     
 
 if st.button("Find Similar Cars"):
+
+    count = search_count_Filter(
+    client=client,
+    index_name=INDEX_NAME,
+    price_min=price_min,
+    price_max=price_max,
+    mileage_min=mileage_min,
+    mileage_max=mileage_max
+    )
+
+    st.write(f"🧮 {count} cars match your filter criteria.")
+   
     query_vector = preprocess_input(category, doors, first_reg, gearbox, seats, fuel_type, performance, drivetype, cubiccapacity)
     
     results = search_similar_cars_with_filters(query_vector,numberofcars,price_min,price_max,mileage_min,mileage_max, similarity_threshold=0.7)
