@@ -128,7 +128,7 @@ def search_similar_cars_with_filters(
     numberofcars, 
     price_min, price_max, 
     mileage_min,mileage_max, 
-    similarity_threshold=0.7
+    similarity_threshold=0.6
 ):
   
     # Build the range filters list
@@ -172,7 +172,7 @@ def search_similar_cars_with_filters(
     results = response["hits"]["hits"]
 
     # Optional: filter results by similarity threshold on _score
-    filtered = [r for r in results if similarity_threshold <= r["_score"] <= 0.99 ]
+    filtered = [r for r in results if r["_score"] >= similarity_threshold]
     random.shuffle(filtered)
     return filtered
   
@@ -275,12 +275,14 @@ if st.button("Find Similar Cars"):
     mileage_min=mileage_min,
     mileage_max=mileage_max
     )
-
+    st.write(f"🧮 {price_min} and {price_max} the price range.")
+    st.write(f"🧮 {mileage_min} and {mileage_max} the mileage range.")
+    
     st.write(f"🧮 {count} cars match your filter criteria.")
    
     query_vector = preprocess_input(category, doors, first_reg, gearbox, seats, fuel_type, performance, drivetype, cubiccapacity)
     
-    results = search_similar_cars_with_filters(query_vector,numberofcars,price_min,price_max,mileage_min,mileage_max, similarity_threshold=0.7)
+    results = search_similar_cars_with_filters(query_vector,numberofcars,price_min,price_max,mileage_min,mileage_max, similarity_threshold=0.6)
     count = len(results)
     st.markdown("<br>", unsafe_allow_html=True)
     st.write(f"🔍 Found {count} similar cars after filtering")
