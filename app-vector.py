@@ -172,7 +172,7 @@ def search_similar_cars_with_filters(
     results = response["hits"]["hits"]
 
     # Optional: filter results by similarity threshold on _score
-    filtered = [r for r in results if similarity_threshold <= r["_score"] <= 0.9 ]
+    filtered = [r for r in results if similarity_threshold <= r["_score"] <= 0.99 ]
     random.shuffle(filtered)
     return filtered
   
