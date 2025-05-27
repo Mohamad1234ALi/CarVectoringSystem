@@ -103,23 +103,22 @@ def preprocess_input(category, doors, first_reg, gearbox, seats, fuel_type, perf
         "Fuel": fuel_type,
         "NumberOfDoors": doors,
         "GearBox": gearbox,
-        "DriveType": drivetype,  # or any default, if not part of Streamlit inputs
+        "DriveType": drivetype,
         "NumberOfSeats": seats
     }])
 
     # OneHotEncode categorical values
     cat_encoded = onehot_encoder.transform(cat_input)
 
-   # Apply log1p to numerical features
-    numerical_input = [first_reg, performance, cubiccapacity]
-    log_transformed = np.log1p(numerical_input).reshape(1, -1)
+    # Numerical features
+    numerical_input = np.array([[first_reg, performance, cubiccapacity]])  # Make it 2D
+    log_transformed = np.log1p(numerical_input)  # log1p returns 2D
 
     # Apply scaler
-    numerical_scaled = scaler.transform(log_transformed)[0]
-    
-  
-    # Combine categorical + numerical
-    return np.concatenate((cat_encoded[0], numerical_scaled))
+    numerical_scaled = scaler.transform(log_transformed)
+
+    # Combine categorical + numerical (both are 2D arrays)
+    return np.concatenate((cat_encoded, numerical_scaled), axis=1)[0]
     
 # Function to search similar cars in OpenSearch
 
