@@ -160,10 +160,10 @@ def search_similar_cars_with_filters(
                 },
                 "script": {
                     "lang": "knn",
-                    "source": "cosineSimilarity(params.query_vector, 'vector') + 1.0",
+                    "source": "knn_score",
                     "params": {
                         "field": "my_vector",
-                        "query_value": query_vector.tolist(),
+                        "query_vector": query_vector.tolist(),
                         "space_type": "l2"
                     }
                 }
