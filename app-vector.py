@@ -163,8 +163,8 @@ def search_similar_cars_with_filters(
                     "source": "knn_score",
                     "params": {
                         "field": "my_vector",
-                        "query_vector": query_vector.tolist(),
-                        "space_type": "l2"
+                        "query_value": query_vector.tolist(),
+                        "space_type": "cosinesimil"
                     }
                 }
             }
