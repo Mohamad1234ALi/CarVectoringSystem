@@ -128,7 +128,7 @@ def search_similar_cars_with_filters(
     numberofcars, 
     price_min, price_max, 
     mileage_min,mileage_max, 
-    similarity_threshold=0.6
+    similarity_threshold=1.5
 ):
   
     # Build the range filters list
@@ -153,20 +153,21 @@ def search_similar_cars_with_filters(
     query = {
         "size": numberofcars,
         "query": {
-            "bool": {
-                "filter": filters,
-                "must": {
-                    "knn": {
-                        "vector": {
-                            "vector": query_vector.tolist(),
-                            "k": numberofcars
-                        }
+            "script_score": {
+                "query": {
+                    "bool": {
+                        "filter": filters  # your structured filters like Fuel, BodyType, etc.
+                    }
+                },
+                "script": {
+                    "source": "cosineSimilarity(params.query_vector, 'vector') + 1.0",
+                    "params": {
+                        "query_vector": query_vector.tolist()
                     }
                 }
             }
-        }
+        }    
     }
-
     # Execute the search
     response = client.search(index=INDEX_NAME, body=query)
     results = response["hits"]["hits"]
@@ -282,7 +283,7 @@ if st.button("Find Similar Cars"):
    
     query_vector = preprocess_input(category, doors, first_reg, gearbox, seats, fuel_type, performance, drivetype, cubiccapacity)
     
-    results = search_similar_cars_with_filters(query_vector,numberofcars,price_min,price_max,mileage_min,mileage_max, similarity_threshold=0.6)
+    results = search_similar_cars_with_filters(query_vector,numberofcars,price_min,price_max,mileage_min,mileage_max, similarity_threshold=1.5)
     count = len(results)
     st.markdown("<br>", unsafe_allow_html=True)
     st.write(f"🔍 Found {count} similar cars after filtering")
