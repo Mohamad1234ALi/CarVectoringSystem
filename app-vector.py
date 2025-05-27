@@ -117,9 +117,10 @@ def preprocess_input(category, doors, first_reg, gearbox, seats, fuel_type, perf
     # Apply scaler
     numerical_scaled = scaler.transform(log_transformed)[0]
     
-  
-    # Combine categorical + numerical
-    return np.concatenate((cat_encoded[0], numerical_scaled))
+    combined = np.concatenate((cat_encoded[0], numerical_scaled))
+    normalized = combined / np.linalg.norm(combined)
+    return normalized
+    
     
     
 # Function to search similar cars in OpenSearch
