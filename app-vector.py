@@ -157,9 +157,7 @@ def search_similar_cars_with_filters(
         "query": {
             "script_score": {
                 "query": {
-                    "bool": {
-                        "filter": filters  # your structured filters like Fuel, BodyType, etc.
-                    }
+                    "match_all": {}
                 },
                 "script": {
                     "lang": "knn",
