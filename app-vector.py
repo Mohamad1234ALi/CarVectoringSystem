@@ -159,14 +159,19 @@ def search_similar_cars_with_filters(
                     }
                 },
                 "script": {
-                    "source": "cosineSimilarity(params.query_vector, 'vector') + 1.0",
+                    "lang": "knn",
+                    "source": "knn_score",
                     "params": {
-                        "query_vector": query_vector.tolist()
+                        "field": "my_vector",
+                        "query_value": query_vector.tolist(),
+                        "space_type": "l2"
                     }
                 }
             }
         }    
     }
+
+    
     # Execute the search
     response = client.search(index=INDEX_NAME, body=query)
     results = response["hits"]["hits"]
