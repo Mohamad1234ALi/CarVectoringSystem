@@ -206,13 +206,11 @@ def search_count_Filter(
         filters.append({"range": {"Mileage": mileage_range}})
 
     # 🔢 Count how many cars match the filters only (before KNN)
-    count_query = {
+     count_query = {
         "query": {
-             "filter": {
-                    "bool": {
-                        "must": filters
-                    }
-                }
+            "bool": {
+                "filter": filters
+            }
         }
     }
     filter_count = client.count(index=INDEX_NAME, body=count_query)["count"]
