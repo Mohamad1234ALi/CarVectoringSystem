@@ -153,12 +153,12 @@ def search_similar_cars_with_filters(
 
     # Construct the query with bool filter and knn must
     query = {
-     "size": numberofcars * 5,
+     "size": numberofcars * 10,
      "query": {
         "knn": {
             "vector": {
                 "vector": query_vector.tolist(),
-                "k": numberofcars * 5,
+                "k": numberofcars * 10,
                 "filter": {
                     "bool": {
                         "must": filters
