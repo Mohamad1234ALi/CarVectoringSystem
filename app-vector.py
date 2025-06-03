@@ -174,11 +174,12 @@ def search_similar_cars_with_filters(
     # Execute the search
     response = client.search(index=INDEX_NAME, body=query)
     results = response["hits"]["hits"]
+    count_result = len(results)
 
     # Optional: filter results by similarity threshold on _score
     filtered = [r for r in results if r["_score"] >= similarity_threshold]
     random.shuffle(filtered)
-    return filtered[:numberofcars]
+    return filtered[:numberofcars], count_result
   
 def search_count_Filter(
     client,
@@ -287,8 +288,10 @@ if st.button("Find Similar Cars"):
    
     query_vector = preprocess_input(category, doors, first_reg, gearbox, seats, fuel_type, performance, drivetype, cubiccapacity)
     
-    results = search_similar_cars_with_filters(query_vector,numberofcars,price_min,price_max,mileage_min,mileage_max, similarity_threshold=percentagefinal)
+    results, count_results = search_similar_cars_with_filters(query_vector,numberofcars,price_min,price_max,mileage_min,mileage_max, similarity_threshold=percentagefinal)
     count = len(results)
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.write(f"🔍 Found {count_results} similar cars using cosine")
     st.markdown("<br>", unsafe_allow_html=True)
     st.write(f"🔍 Found {count} similar cars after filtering with percentage {percentagefinal}")
     
