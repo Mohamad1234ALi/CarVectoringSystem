@@ -176,9 +176,9 @@ def search_similar_cars_with_filters(
     results = response["hits"]["hits"]
 
     # Optional: filter results by similarity threshold on _score
-    filtered = [r for r in results if r["_score"] >= similarity_threshold]
-    random.shuffle(filtered)
-    return filtered
+    # filtered = [r for r in results if r["_score"] >= similarity_threshold]
+    random.shuffle(results)
+    return results
   
 def search_count_Filter(
     client,
