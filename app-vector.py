@@ -130,7 +130,7 @@ def search_similar_cars_with_filters(
     numberofcars, 
     price_min, price_max, 
     mileage_min,mileage_max, 
-    similarity_threshold=0.6
+    similarity_threshold
 ):
   
     # Build the range filters list
@@ -231,7 +231,8 @@ st.write("Find similar cars 🔍")
 
 numberofcars = st.number_input("Number of cars to be searched", min_value=5, max_value=5000, value=10)
 
-
+percentage = st.number_input("Similarity Percentage", min_value=10, max_value=100, value=60)
+percentagefinal = percentage / 100
 
 # User Inputs
 
@@ -286,7 +287,7 @@ if st.button("Find Similar Cars"):
    
     query_vector = preprocess_input(category, doors, first_reg, gearbox, seats, fuel_type, performance, drivetype, cubiccapacity)
     
-    results = search_similar_cars_with_filters(query_vector,numberofcars,price_min,price_max,mileage_min,mileage_max, similarity_threshold=0.6)
+    results = search_similar_cars_with_filters(query_vector,numberofcars,price_min,price_max,mileage_min,mileage_max, similarity_threshold=percentagefinal)
     count = len(results)
     st.markdown("<br>", unsafe_allow_html=True)
     st.write(f"🔍 Found {count} similar cars after filtering")
