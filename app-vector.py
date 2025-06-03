@@ -290,7 +290,7 @@ if st.button("Find Similar Cars"):
     results = search_similar_cars_with_filters(query_vector,numberofcars,price_min,price_max,mileage_min,mileage_max, similarity_threshold=percentagefinal)
     count = len(results)
     st.markdown("<br>", unsafe_allow_html=True)
-    st.write(f"🔍 Found {count} similar cars after filtering")
+    st.write(f"🔍 Found {count} similar cars after filtering with percentage {percentagefinal}")
     
     if results:
         # Filtering the data depends on the choice of the user
