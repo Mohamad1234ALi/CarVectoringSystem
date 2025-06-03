@@ -176,7 +176,7 @@ def search_similar_cars_with_filters(
     results = response["hits"]["hits"]
 
     # Optional: filter results by similarity threshold on _score
-    filtered = [r for r in results if r["_score"] >= similarity_threshold]
+    filtered = [r for r in results if r["_score"] >= similarity_threshold][:numberofcars]
     random.shuffle(filtered)
     return filtered
   
