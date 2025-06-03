@@ -166,8 +166,8 @@ def search_similar_cars_with_filters(
                 }
             }
         }
-     }
-   }
+      }
+    }
 
 
     
