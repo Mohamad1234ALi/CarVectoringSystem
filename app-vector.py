@@ -153,12 +153,12 @@ def search_similar_cars_with_filters(
 
     # Construct the query with bool filter and knn must
     query = {
-     "size": numberofcars * 10,
+     "size": numberofcars * 20,
      "query": {
         "knn": {
             "vector": {
                 "vector": query_vector.tolist(),
-                "k": numberofcars * 10,
+                "k": numberofcars * 20,
                 "filter": {
                     "bool": {
                         "must": filters
@@ -176,9 +176,9 @@ def search_similar_cars_with_filters(
     results = response["hits"]["hits"]
 
     # Optional: filter results by similarity threshold on _score
-    # filtered = [r for r in results if r["_score"] >= similarity_threshold]
-    random.shuffle(results)
-    return results
+    filtered = [r for r in results if r["_score"] >= similarity_threshold]
+    random.shuffle(filtered)
+    return filtered
   
 def search_count_Filter(
     client,
