@@ -12,7 +12,7 @@ import boto3
 import random
 
 # OpenSearch Configuration
-OPENSEARCH_HOST = "https://search-mycarsystemdomain-3ujyrlm64nacrg4xkmoznl5oqy.us-east-1.es.amazonaws.com" # the opensearch endpoint
+OPENSEARCH_HOST = "https://search-carsystemvector-vsbohud2ogupvyw6ssdoddybgm.us-east-1.es.amazonaws.com" # the opensearch endpoint
 INDEX_NAME = "cars_index_new"
 USERNAME = "moeuser"
 PASSWORD = "Mohamad@123"
