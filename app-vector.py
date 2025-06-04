@@ -397,7 +397,6 @@ if st.button("Find Similar Cars"):
     count = len(results)
     st.markdown("<br>", unsafe_allow_html=True)
     st.write(f"🔍 Found {count_results} similar cars using cosine")
-    st.markdown("<br>", unsafe_allow_html=True)
     st.write(f"🔍 Found {count} similar cars after filtering with percentage {percentagefinal}")
     
     if results:
