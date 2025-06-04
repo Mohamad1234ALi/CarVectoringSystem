@@ -133,9 +133,9 @@ def search_similar_cars_with_filters(
     similarity_threshold,
     gearbox_needed,fuel_needed,
     category_needed,doors_needed,
-    drive_needed,seats_needed
+    drive_needed,seats_needed,
     gearbox_value,fuel_value,
-    category_value,doors_value
+    category_value,doors_value,
     drive_value,seats_value
 ):
   
@@ -213,9 +213,9 @@ def search_count_Filter(
     mileage_min,mileage_max,
     gearbox_needed,fuel_needed,
     category_needed,doors_needed,
-    drive_needed,seats_needed
+    drive_needed,seats_needed,
     gearbox_value,fuel_value,
-    category_value,doors_value
+    category_value,doors_value,
     drive_value,seats_value
 ):
     # Build filter conditions
