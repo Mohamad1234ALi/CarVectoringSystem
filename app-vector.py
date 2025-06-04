@@ -238,12 +238,54 @@ percentagefinal = percentage / 100
 # User Inputs
 
 
-category = st.selectbox("Body Type", categories_list[CATEGORICAL_FEATURES.index("BodyType")])
-fuel_type = st.selectbox("Fuel Type", categories_list[CATEGORICAL_FEATURES.index("Fuel")])
-doors = st.selectbox("Number Of Doors", categories_list[CATEGORICAL_FEATURES.index("NumberOfDoors")])
-gearbox = st.selectbox("Gearbox", categories_list[CATEGORICAL_FEATURES.index("GearBox")])
-drivetype = st.selectbox("Drive Type", categories_list[CATEGORICAL_FEATURES.index("DriveType")])
-seats = st.selectbox("Number Of Seats", categories_list[CATEGORICAL_FEATURES.index("NumberOfSeats")])
+col1, col2 = st.columns(2)
+
+with col1:
+   gearbox = st.selectbox("Gearbox", categories_list[CATEGORICAL_FEATURES.index("GearBox")])
+    
+with col2:
+   gearbox_needed = st.checkbox("Filter by Gearbox", value=False)
+
+col1, col2 = st.columns(2)
+
+with col1:
+    fuel_type = st.selectbox("Fuel Type", categories_list[CATEGORICAL_FEATURES.index("Fuel")])
+    
+with col2:
+    fuel_needed = st.checkbox("Filter by Fuel ?",  value=False)
+
+col1, col2 = st.columns(2)
+
+with col1:
+    category = st.selectbox("Body Type", categories_list[CATEGORICAL_FEATURES.index("BodyType")])
+    
+with col2:
+    category_needed = st.checkbox("Filter by Body Type ?",  value=False)
+
+col1, col2 = st.columns(2)
+
+with col1:
+    doors = st.selectbox("Number Of Doors", categories_list[CATEGORICAL_FEATURES.index("NumberOfDoors")])
+    
+with col2:
+    doors_needed = st.checkbox("Filter by Doors ?",  value=False)
+
+col1, col2 = st.columns(2)
+
+with col1:
+    drivetype = st.selectbox("Drive Type", categories_list[CATEGORICAL_FEATURES.index("DriveType")])
+    
+with col2:
+    drive_needed = st.checkbox("Filter by Drive Type ?",  value=False)
+
+col1, col2 = st.columns(2)
+
+with col1:
+    seats = st.selectbox("Number Of Seats", categories_list[CATEGORICAL_FEATURES.index("NumberOfSeats")])
+    
+with col2:
+    seats_needed = st.checkbox("Filter by Seats ?",  value=False)
+
     
 performance = st.number_input("Performance", min_value=50, max_value=1000, value=100)
 cubiccapacity = st.number_input("Cubic Capacity", min_value=900, max_value=4000, value=900)
