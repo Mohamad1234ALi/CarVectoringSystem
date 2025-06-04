@@ -288,47 +288,53 @@ percentagefinal = percentage / 100
 # User Inputs
 
 
-# Gearbox
-col1, col2, col3 = st.columns([2, 2, 1])
+col1, col2 = st.columns(2)
+
 with col1:
-    gearbox = st.selectbox("Gearbox", categories_list[CATEGORICAL_FEATURES.index("GearBox")])
+   gearbox = st.selectbox("Gearbox", categories_list[CATEGORICAL_FEATURES.index("GearBox")])
+    
 with col2:
-    gearbox_needed = st.checkbox("Filter by Gearbox", value=False, key="gearbox")
+   gearbox_needed = st.checkbox("Filter by Gearbox", value=False)
 
-# Fuel Type
-col4, col5, col6 = st.columns([2, 2, 1])
-with col4:
+col1, col2 = st.columns(2)
+
+with col1:
     fuel_type = st.selectbox("Fuel Type", categories_list[CATEGORICAL_FEATURES.index("Fuel")])
-with col5:
-    fuel_needed = st.checkbox("Filter by Fuel?", value=False, key="fuel")
+    
+with col2:
+    fuel_needed = st.checkbox("Filter by Fuel ?",  value=False)
 
-# Body Type
-col7, col8, col9 = st.columns([2, 2, 1])
-with col7:
+col1, col2 = st.columns(2)
+
+with col1:
     category = st.selectbox("Body Type", categories_list[CATEGORICAL_FEATURES.index("BodyType")])
-with col8:
-    category_needed = st.checkbox("Filter by Body Type?", value=False, key="body")
+    
+with col2:
+    category_needed = st.checkbox("Filter by Body Type ?",  value=False)
 
-# Number of Doors
-col10, col11, col12 = st.columns([2, 2, 1])
-with col10:
+col1, col2 = st.columns(2)
+
+with col1:
     doors = st.selectbox("Number Of Doors", categories_list[CATEGORICAL_FEATURES.index("NumberOfDoors")])
-with col11:
-    doors_needed = st.checkbox("Filter by Doors?", value=False, key="doors")
+    
+with col2:
+    doors_needed = st.checkbox("Filter by Doors ?",  value=False)
 
-# Drive Type
-col13, col14, col15 = st.columns([2, 2, 1])
-with col13:
+col1, col2 = st.columns(2)
+
+with col1:
     drivetype = st.selectbox("Drive Type", categories_list[CATEGORICAL_FEATURES.index("DriveType")])
-with col14:
-    drive_needed = st.checkbox("Filter by Drive Type?", value=False, key="drive")
+    
+with col2:
+    drive_needed = st.checkbox("Filter by Drive Type ?",  value=False)
 
-# Number of Seats
-col16, col17, col18 = st.columns([2, 2, 1])
-with col16:
+col1, col2 = st.columns(2)
+
+with col1:
     seats = st.selectbox("Number Of Seats", categories_list[CATEGORICAL_FEATURES.index("NumberOfSeats")])
-with col17:
-    seats_needed = st.checkbox("Filter by Seats?", value=False, key="seats")
+    
+with col2:
+    seats_needed = st.checkbox("Filter by Seats ?",  value=False)
 
     
 performance = st.number_input("Performance", min_value=50, max_value=1000, value=100)
