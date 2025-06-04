@@ -132,7 +132,11 @@ def search_similar_cars_with_filters(
     mileage_min,mileage_max, 
     similarity_threshold,
     gearbox_needed,fuel_needed,
-    gearbox_value,fuel_value
+    category_needed,doors_needed,
+    drive_needed,seats_needed
+    gearbox_value,fuel_value,
+    category_value,doors_value
+    drive_value,seats_value
 ):
   
     # Build the range filters list
@@ -155,10 +159,22 @@ def search_similar_cars_with_filters(
 
     if gearbox_needed :  # checkbox True and value provided
         filters.append({"term": {"GearBox": gearbox_value}})
-
     # Fuel type filter
     if fuel_needed :  # checkbox True and value provided
         filters.append({"term": {"Fuel": fuel_value}})
+
+    if category_needed :  # checkbox True and value provided
+        filters.append({"term": {"BodyType": category_value}})
+
+    if doors_needed :  # checkbox True and value provided
+        filters.append({"term": {"NumberOfDoors": doors_value}})
+
+    if drive_needed :  # checkbox True and value provided
+        filters.append({"term": {"DriveType": drive_value}})
+
+    if seats_needed :  # checkbox True and value provided
+        filters.append({"term": {"NumberOfSeats": seats_value}})
+
 
     # Construct the query with bool filter and knn must
     query = {
@@ -196,7 +212,11 @@ def search_count_Filter(
     price_min, price_max, 
     mileage_min,mileage_max,
     gearbox_needed,fuel_needed,
-    gearbox_value,fuel_value
+    category_needed,doors_needed,
+    drive_needed,seats_needed
+    gearbox_value,fuel_value,
+    category_value,doors_value
+    drive_value,seats_value
 ):
     # Build filter conditions
     filters = []
@@ -223,6 +243,18 @@ def search_count_Filter(
     # Fuel type filter
     if fuel_needed :  # checkbox True and value provided
         filters.append({"term": {"Fuel": fuel_value}})
+
+    if category_needed :  # checkbox True and value provided
+        filters.append({"term": {"BodyType": category_value}})
+
+    if doors_needed :  # checkbox True and value provided
+        filters.append({"term": {"NumberOfDoors": doors_value}})
+
+    if drive_needed :  # checkbox True and value provided
+        filters.append({"term": {"DriveType": drive_value}})
+
+    if seats_needed :  # checkbox True and value provided
+        filters.append({"term": {"NumberOfSeats": seats_value}})
 
     # 🔢 Count how many cars match the filters only (before KNN)
     count_query = {
@@ -340,10 +372,10 @@ if st.button("Find Similar Cars"):
     price_max=price_max,
     mileage_min=mileage_min,
     mileage_max=mileage_max,
-    gearbox_needed=gearbox_needed,
-    fuel_needed=fuel_needed,
-    gearbox_value=gearbox,
-    fuel_value=fuel_type
+    gearbox_needed=gearbox_needed , 
+    fuel_needed=fuel_needed,category_needed=category_needed,doors_needed=doors_needed,drive_needed=drive_needed,
+    seats_needed=seats_needed , gearbox_value=gearbox ,fuel_value=fuel_type, category_value=category,doors_value=doors,
+    drive_value=drivetype,seats_value=seats
     )
     st.write(f"🧮 {price_min} and {price_max} the price range.")
     st.write(f"🧮 {mileage_min} and {mileage_max} the mileage range.")
@@ -353,7 +385,9 @@ if st.button("Find Similar Cars"):
     query_vector = preprocess_input(category, doors, first_reg, gearbox, seats, fuel_type, performance, drivetype, cubiccapacity)
     
     results, count_results = search_similar_cars_with_filters(query_vector,numberofcars,price_min,price_max,mileage_min,mileage_max, similarity_threshold=percentagefinal,gearbox_needed=gearbox_needed , 
-                                                             fuel_needed=fuel_needed , gearbox_value=gearbox ,fuel_value=fuel_type)
+                                                             fuel_needed=fuel_needed,category_needed=category_needed,doors_needed=doors_needed,drive_needed=drive_needed,
+                                                             seats_needed=seats_needed , gearbox_value=gearbox ,fuel_value=fuel_type, category_value=category,doors_value=doors
+                                                              , drive_value=drivetype,seats_value=seats)
     count = len(results)
     st.markdown("<br>", unsafe_allow_html=True)
     st.write(f"🔍 Found {count_results} similar cars using cosine")
