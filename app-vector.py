@@ -130,7 +130,9 @@ def search_similar_cars_with_filters(
     numberofcars, 
     price_min, price_max, 
     mileage_min,mileage_max, 
-    similarity_threshold
+    similarity_threshold,
+    gearbox_needed,fuel_needed,
+    gearbox_value,fuel_value
 ):
   
     # Build the range filters list
@@ -150,6 +152,13 @@ def search_similar_cars_with_filters(
         if mileage_max is not None:
             mileage_range["lte"] = mileage_max
         filters.append({"range": {"Mileage": mileage_range}})
+
+    if gearbox_needed :  # checkbox True and value provided
+        filters.append({"term": {"GearBox": gearbox_value}})
+
+    # Fuel type filter
+    if fuel_needed :  # checkbox True and value provided
+        filters.append({"term": {"Fuel": fuel_value}})
 
     # Construct the query with bool filter and knn must
     query = {
@@ -186,6 +195,8 @@ def search_count_Filter(
     index_name,
     price_min, price_max, 
     mileage_min,mileage_max,
+    gearbox_needed,fuel_needed,
+    gearbox_value,fuel_value
 ):
     # Build filter conditions
     filters = []
@@ -205,6 +216,13 @@ def search_count_Filter(
         if mileage_max is not None:
             mileage_range["lte"] = mileage_max
         filters.append({"range": {"Mileage": mileage_range}})
+
+    if gearbox_needed :  # checkbox True and value provided
+        filters.append({"term": {"GearBox": gearbox_value}})
+
+    # Fuel type filter
+    if fuel_needed :  # checkbox True and value provided
+        filters.append({"term": {"Fuel": fuel_value}})
 
     # 🔢 Count how many cars match the filters only (before KNN)
     count_query = {
@@ -321,7 +339,11 @@ if st.button("Find Similar Cars"):
     price_min=price_min,
     price_max=price_max,
     mileage_min=mileage_min,
-    mileage_max=mileage_max
+    mileage_max=mileage_max,
+    gearbox_needed=gearbox_needed,
+    fuel_needed=fuel_needed,
+    gearbox_value=gearbox,
+    fuel_value=fuel_type
     )
     st.write(f"🧮 {price_min} and {price_max} the price range.")
     st.write(f"🧮 {mileage_min} and {mileage_max} the mileage range.")
@@ -330,7 +352,8 @@ if st.button("Find Similar Cars"):
    
     query_vector = preprocess_input(category, doors, first_reg, gearbox, seats, fuel_type, performance, drivetype, cubiccapacity)
     
-    results, count_results = search_similar_cars_with_filters(query_vector,numberofcars,price_min,price_max,mileage_min,mileage_max, similarity_threshold=percentagefinal)
+    results, count_results = search_similar_cars_with_filters(query_vector,numberofcars,price_min,price_max,mileage_min,mileage_max, similarity_threshold=percentagefinal,gearbox_needed=gearbox_needed , 
+                                                             fuel_needed=fuel_needed , gearbox_value=gearbox ,fuel_value=fuel_type)
     count = len(results)
     st.markdown("<br>", unsafe_allow_html=True)
     st.write(f"🔍 Found {count_results} similar cars using cosine")
