@@ -294,7 +294,7 @@ with col1:
    gearbox = st.selectbox("Gearbox", categories_list[CATEGORICAL_FEATURES.index("GearBox")])
     
 with col2:
-   st.markdown("####")
+   st.markdown("######")
    gearbox_needed = st.checkbox("Filter by Gearbox", value=False)
 
 col1, col2 = st.columns(2)
