@@ -294,6 +294,7 @@ with col1:
    gearbox = st.selectbox("Gearbox", categories_list[CATEGORICAL_FEATURES.index("GearBox")])
     
 with col2:
+   st.markdown("###")
    gearbox_needed = st.checkbox("Filter by Gearbox", value=False)
 
 col1, col2 = st.columns(2)
@@ -302,6 +303,7 @@ with col1:
     fuel_type = st.selectbox("Fuel Type", categories_list[CATEGORICAL_FEATURES.index("Fuel")])
     
 with col2:
+    st.markdown("###")
     fuel_needed = st.checkbox("Filter by Fuel ?",  value=False)
 
 col1, col2 = st.columns(2)
@@ -310,6 +312,7 @@ with col1:
     category = st.selectbox("Body Type", categories_list[CATEGORICAL_FEATURES.index("BodyType")])
     
 with col2:
+    st.markdown("###")
     category_needed = st.checkbox("Filter by Body Type ?",  value=False)
 
 col1, col2 = st.columns(2)
@@ -318,6 +321,7 @@ with col1:
     doors = st.selectbox("Number Of Doors", categories_list[CATEGORICAL_FEATURES.index("NumberOfDoors")])
     
 with col2:
+    st.markdown("###")
     doors_needed = st.checkbox("Filter by Doors ?",  value=False)
 
 col1, col2 = st.columns(2)
@@ -326,6 +330,7 @@ with col1:
     drivetype = st.selectbox("Drive Type", categories_list[CATEGORICAL_FEATURES.index("DriveType")])
     
 with col2:
+    st.markdown("###")
     drive_needed = st.checkbox("Filter by Drive Type ?",  value=False)
 
 col1, col2 = st.columns(2)
@@ -334,6 +339,7 @@ with col1:
     seats = st.selectbox("Number Of Seats", categories_list[CATEGORICAL_FEATURES.index("NumberOfSeats")])
     
 with col2:
+    st.markdown("###")
     seats_needed = st.checkbox("Filter by Seats ?",  value=False)
 
     
