@@ -30,8 +30,8 @@ boto3.setup_default_session(
 )
 
 # Connect and access to the dynamodb table 
-dynamodb = boto3.resource("dynamodb", region_name="us-east-1") 
-table = dynamodb.Table("CarList")
+dynamodb = boto3.resource(st.secrets["DYNAMODB"], region_name="us-east-1") 
+table = dynamodb.Table(st.secrets["DYNAMO_TABLE"])
 
 # Load scaler from s3 (we need the same scaler while scale the numerical data (systemvectorizaion file))
 @st.cache_resource
