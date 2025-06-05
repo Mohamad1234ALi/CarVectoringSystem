@@ -12,10 +12,10 @@ import boto3
 import random
 
 # OpenSearch Configuration
-OPENSEARCH_HOST = "https://search-carsystemvector-vsbohud2ogupvyw6ssdoddybgm.us-east-1.es.amazonaws.com" # the opensearch endpoint
+OPENSEARCH_HOST = st.secrets["OPENSEARCH_HOST"] # the opensearch endpoint
 INDEX_NAME = "cars_index_new"
-USERNAME = "moeuser"
-PASSWORD = "Mohamad@123"
+USERNAME = st.secrets["USERNAME"]
+PASSWORD = st.secrets["PASSWORD"]
 
 # Get the parameters from the settings in streamlit app
 aws_access_key = st.secrets["AWS_ACCESS_KEY_ID"]
