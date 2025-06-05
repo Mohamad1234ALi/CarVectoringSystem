@@ -72,13 +72,13 @@ NUMERICAL_FEATURES = ["FirstRegistration", "Power", "CubicCapacity"]
 
 
 # Initialize StandardScaler and OneHotEncoder
-scaler_url = "https://car-recommendation-raed.s3.us-east-1.amazonaws.com/scaler/scaler.pkl"
+scaler_url = st.secrets["SCALER_URL"]
 scaler = load_scaler(scaler_url)
 
-onehot_encoder_url = "https://car-recommendation-raed.s3.us-east-1.amazonaws.com/onehotencoder/onehot_encoder.pkl"
+#onehot_encoder_url = "https://car-recommendation-raed.s3.us-east-1.amazonaws.com/onehotencoder/onehot_encoder.pkl"
 #onehot_encoder = load_onehot_encoder(onehot_encoder_url)
 
-url = "https://car-recommendation-raed.s3.us-east-1.amazonaws.com/onehotencoder/categories_list.json"
+url = st.secrets["CATEGORIES_URL"]
 
 response = requests.get(url)
 response.raise_for_status()  # to catch HTTP errors
