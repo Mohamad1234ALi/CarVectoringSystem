@@ -375,7 +375,7 @@ mileage_min, mileage_max = mileage_range
 
 
 
-if st.button("Find Similar Cars") and user_input :
+if st.button("Find Similar Cars")  :
 
     count = search_count_Filter(
     client=client,
