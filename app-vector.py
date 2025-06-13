@@ -368,20 +368,6 @@ if "messages" not in st.session_state:
         {"role": "system", "content": "You are a helpful assistant."}
     ]
 
-api_key = "FNZF4yv6oNVnrgdWBS0NSO9LL0rxkRHIR8Y5aCofM4JDUFA2wrUCJQQJ99BCACHYHv6XJ3w3AAAAACOGIhqv"
-endpoint = "https://autov-m8ry7l1o-eastus2.openai.azure.com/"
-deployment_name = "gpt-4o"
-api_version = "2024-02-15-preview"  # or the version you're using
-
-url = f"{endpoint}openai/deployments/{deployment_name}/chat/completions?api-version={api_version}"
-headers = {
-    "Content-Type": "application/json",
-    "api-key": api_key
-}
-
-# Streamlit UI
-st.title("💬 Azure GPT Chat")
-user_input = st.text_input("You:", key="input")
 
 price_min, price_max = price_range
 mileage_min, mileage_max = mileage_range
@@ -391,29 +377,6 @@ mileage_min, mileage_max = mileage_range
 
 if st.button("Find Similar Cars") and user_input :
 
-
-     # Append user message to memory
-    st.session_state.messages.append({"role": "user", "content": user_input})
-
-    # Request payload
-    payload = {
-        "messages": st.session_state.messages,
-        "temperature": 0.7,
-        "max_tokens": 300
-    }
-
-    # Call Azure OpenAI
-    response = requests.post(url, headers=headers, json=payload)
-
-    if response.status_code == 200:
-        assistant_message = response.json()["choices"][0]["message"]["content"]
-        st.session_state.messages.append({"role": "assistant", "content": assistant_message})
-        st.text_area("Assistant:", assistant_message, height=200)
-    else:
-        st.error(f"Error {response.status_code}: {response.text}")
-
-
-    
     count = search_count_Filter(
     client=client,
     index_name=INDEX_NAME,
