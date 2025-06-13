@@ -392,7 +392,7 @@ if st.button("Find Similar Cars")  :
     st.write(f"🧮 {price_min} and {price_max} the price range.")
     st.write(f"🧮 {mileage_min} and {mileage_max} the mileage range.")
     
-    st.write(f"🧮 {count} cars match your filter criteria.")
+    #st.write(f"🧮 {count} cars match your filter criteria.")
    
     query_vector = preprocess_input(category, doors, first_reg, gearbox, seats, fuel_type, performance, drivetype, cubiccapacity)
     
