@@ -23,6 +23,12 @@ aws_access_key = st.secrets["AWS_ACCESS_KEY_ID"]
 aws_secret_key = st.secrets["AWS_SECRET_ACCESS_KEY"]
 aws_region = st.secrets["AWS_DEFAULT_REGION"]
 
+api_key = st.secrets["api_key"]
+endpoint = st.secrets["endpoint"]
+deployment_name = st.secrets["deployment_name"]
+api_version = st.secrets["api_version"]
+
+
 # Initialize the boto3
 boto3.setup_default_session(
     aws_access_key_id=aws_access_key,
@@ -93,6 +99,19 @@ dummy_input = pd.DataFrame(
 # Now fit the encoder
 onehot_encoder = OneHotEncoder(categories=categories_list, handle_unknown='ignore', sparse_output=False)
 onehot_encoder.fit(dummy_input)
+
+url = f"{endpoint}openai/deployments/{deployment_name}/chat/completions?api-version={api_version}"
+headers = {
+    "Content-Type": "application/json",
+    "api-key": api_key
+}
+
+# Initialize session state for memory
+if "messages" not in st.session_state:
+    st.session_state.messages = [
+        {"role": "system", "content": "You are a helpful assistant."}
+    ]
+
 
 # Function to convert user input into vector
 def preprocess_input(category, doors, first_reg, gearbox, seats, fuel_type, performance, drivetype, cubiccapacity):
@@ -361,23 +380,40 @@ mileage_range = st.slider(
     step=1000
 )
 first_reg = st.slider("First Registration Year", 1995, 2025, 2005)
-
-# Initialize session state for memory
-if "messages" not in st.session_state:
-    st.session_state.messages = [
-        {"role": "system", "content": "You are a helpful assistant."}
-    ]
-
-
 price_min, price_max = price_range
 mileage_min, mileage_max = mileage_range
     
+# Streamlit UI
+st.title("💬 Azure GPT Chat")
+user_input = st.text_input("You:", key="input")
+
+
+if st.button("Find Similar Cars")  and user_input :
+
+     # Append user message to memory
+    st.session_state.messages.append({"role": "user", "content": user_input})
+
+    # Request payload
+    payload = {
+        "messages": st.session_state.messages,
+        "temperature": 0.7,
+        "max_tokens": 200
+    }
+
+    # Call Azure OpenAI
+    response = requests.post(url, headers=headers, json=payload)
+
+    if response.status_code == 200:
+        assistant_message = response.json()["choices"][0]["message"]["content"]
+        st.session_state.messages.append({"role": "assistant", "content": assistant_message})
+        st.text_area("Assistant:", assistant_message, height=200)
+    else:
+        st.error(f"Error {response.status_code}: {response.text}")
 
 
 
-if st.button("Find Similar Cars")  :
-
-   count = search_count_Filter(
+    
+    count = search_count_Filter(
       client=client,
       index_name=INDEX_NAME,
       price_min=price_min,
@@ -388,7 +424,7 @@ if st.button("Find Similar Cars")  :
       fuel_needed=fuel_needed,category_needed=category_needed,doors_needed=doors_needed,drive_needed=drive_needed,
       seats_needed=seats_needed , gearbox_value=gearbox ,fuel_value=fuel_type, category_value=category,doors_value=doors,
       drive_value=drivetype,seats_value=seats
-)
+    )
     st.write(f"🧮 {price_min} and {price_max} the price range.")
     st.write(f"🧮 {mileage_min} and {mileage_max} the mileage range.")
     
