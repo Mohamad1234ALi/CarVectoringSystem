@@ -112,62 +112,12 @@ if "messages" not in st.session_state:
         {
             "role": "system",
             "content": (
-                "You are a car assistant. Extract car preferences from user input and return only valid JSON.\n"
-                "If a value is missing, set it to null. Use only the allowed values below.\n\n"
-                "Fields and allowed values:\n"
-                "- gearbox: AUTOMATIC, MANUAL, SEMI_AUTOMATIC\n"
-                "- fueltype: CNG, DIESEL, ELECTRICITY, ETHANOL, HYBRID, HYBRID_DIESEL, LPG, OTHER, PETROL\n"
-                "- bodytype: CABRIO, ESTATE_CAR, LIMOUSINE, OFFROAD, OTHER_CAR, SMALL_CAR, SPORTS_CAR, VAN\n"
-                "- numberOfDoors: TWO_OR_THREE, FOUR_OR_FIVE, SIX_OR_SEVEN\n"
-                "- driveType: ALL_WHEEL, FRONT, REAR\n"
-                "- numberOfSeats, performance_kw, cubic_capacity, price_max, mealage_max, first_registration_year_minimum: integers\n\n"
-                "Return only the JSON object. No comments or explanations."
+                "You are a knowledgeable and friendly sports assistant. "
+                "You help users with sports statistics, match schedules, player info, and general sports news. "
+                "Always be concise, informative, and easy to understand."
             )
-        },
-        # Beispiel 1
-        {
-            "role": "user",
-            "content": "Ich suche ein kleines Auto mit Benzin, am besten Schaltgetriebe. Es sollte sparsam sein und nicht älter als 2018."
-        },
-        {
-            "role": "assistant",
-            "content": json.dumps({
-                "gearbox": "MANUAL",
-                "fueltype": "PETROL",
-                "bodytype": "SMALL_CAR",
-                "numberOfDoors": None,
-                "driveType": None,
-                "numberOfSeats": None,
-                "performance_kw": None,
-                "cubic_capacity": None,
-                "price_max": None,
-                "mealage_max": None,
-                "first_registration_year_minimum": 2018
-            }, indent=2)
-        },
-        #  Beispiel 2
-        {
-            "role": "user",
-            "content": "Ich brauche ein Auto für meine Familie mit mindestens 6 Sitzen. Am liebsten Automatik und Diesel. Kein Sportwagen."
-        },
-        {
-            "role": "assistant",
-            "content": json.dumps({
-                "gearbox": "AUTOMATIC",
-                "fueltype": "DIESEL",
-                "bodytype": "VAN",
-                "numberOfDoors": None,
-                "driveType": None,
-                "numberOfSeats": 6,
-                "performance_kw": None,
-                "cubic_capacity": None,
-                "price_max": None,
-                "mealage_max": None,
-                "first_registration_year_minimum": None
-            }, indent=2)
         }
     ]
-
 
 # Function to convert user input into vector
 def preprocess_input(category, doors, first_reg, gearbox, seats, fuel_type, performance, drivetype, cubiccapacity):
@@ -462,7 +412,7 @@ if st.button("Find Similar Cars")  and user_input :
     if response.status_code == 200:
         assistant_message = response.json()["choices"][0]["message"]["content"]
         st.session_state.messages.append({"role": "assistant", "content": assistant_message})
-        st.text_area("Assistant:", assistant_message, height=200)
+        st.text_area("Assistant:", assistant_message, height=400)
     else:
         st.error(f"Error {response.status_code}: {response.text}")
 
