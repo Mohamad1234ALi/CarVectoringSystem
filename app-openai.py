@@ -153,7 +153,12 @@ def get_system_prompt(phase, last_user_message=""):
     else:
         return "You are an AI, a helpful assistant"
 
-
+def render_chat_history():
+    for msg in st.session_state.messages:
+        if msg["role"] == "user":
+            st.markdown(f"**🧑 You:** {msg['content']}")
+        elif msg["role"] == "assistant":
+            st.markdown(f"**🤖 Assistant:** {msg['content']}")
 
 
 def get_gpt_message(user_input, system_prompt, temperature_value, max_tokens):
@@ -237,12 +242,6 @@ Return only the follow-up question – in {lang_hint}.
 
     return prompt
 
-for msg in st.session_state.messages:
-    if msg["role"] == "user":
-        st.markdown(f"**You:** {msg['content']}")
-    elif msg["role"] == "assistant":
-        st.markdown(f"**Assistant:** {msg['content']}")
-
 # Streamlit UI
 st.title("💬 Azure GPT Chat")
 user_input = st.text_input("You:", key="input")
@@ -266,10 +265,12 @@ if st.button("Send")  and user_input :
                followUpQuestion = get_gpt_message(followUpPrompt, get_system_prompt("followup",user_input), 0.4, 150); 
                st.session_state.messages.append({"role": "assistant", "content": followUpQuestion})
                st.write("Missing fields:", null_fields)
-               st.rerun()
+            
             else:
                st.write("All fields filled:", parsed_json)
-
+               
+            st.session_state.user_input = "" 
+            render_chat_history()
         except json.JSONDecodeError:
          st.warning("The response is not valid JSON:")
          st.write(response)
