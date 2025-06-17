@@ -389,6 +389,12 @@ first_reg = st.slider("First Registration Year", 1995, 2025, 2005)
 price_min, price_max = price_range
 mileage_min, mileage_max = mileage_range
     
+for msg in st.session_state.messages:
+    if msg["role"] == "user":
+        st.markdown(f"**You:** {msg['content']}")
+    elif msg["role"] == "assistant":
+        st.markdown(f"**Assistant:** {msg['content']}")
+
 # Streamlit UI
 st.title("💬 Azure GPT Chat")
 user_input = st.text_input("You:", key="input")
@@ -412,7 +418,7 @@ if st.button("Find Similar Cars")  and user_input :
     if response.status_code == 200:
         assistant_message = response.json()["choices"][0]["message"]["content"]
         st.session_state.messages.append({"role": "assistant", "content": assistant_message})
-        st.text_area("Assistant:", assistant_message, height=400)
+        st.experimental_rerun()
     else:
         st.error(f"Error {response.status_code}: {response.text}")
 
@@ -442,10 +448,10 @@ if st.button("Find Similar Cars")  and user_input :
                                                              fuel_needed=fuel_needed,category_needed=category_needed,doors_needed=doors_needed,drive_needed=drive_needed,
                                                              seats_needed=seats_needed , gearbox_value=gearbox ,fuel_value=fuel_type, category_value=category,doors_value=doors
                                                               , drive_value=drivetype,seats_value=seats)
-    #count = len(results)
+    count = len(results)
     st.markdown("<br>", unsafe_allow_html=True)
     st.write(f"🔍 Found {count_results} similar cars using cosine")
-    #st.write(f"🔍 Found {count} similar cars after filtering with percentage {percentagefinal}")
+    st.write(f"🔍 Found {count} similar cars after filtering with percentage {percentagefinal}")
     
     if results:
         # Filtering the data depends on the choice of the user
