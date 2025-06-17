@@ -99,12 +99,56 @@ car_initial_prompt = (
 )
 
 
+followup_instruction = """
+You are a warm, helpful and intuitive assistant helping a person find a used car that fits their needs.
+
+You already received some preferences in JSON format, but a few values are still missing.
+
+🎯 Your task: Ask ONE friendly, natural follow-up question to clarify one or more of the missing parameters.
+
+❗ Only ask about parameters that exist in the following JSON schema:
+
+{
+  "gearbox": "AUTOMATIC" | "MANUAL" | "SEMI_AUTOMATIC",
+  "fueltype": "CNG" | "DIESEL" | "ELECTRICITY" | "ETHANOL" | "HYBRID" | "HYBRID_DIESEL" | "LPG" | "OTHER" | "PETROL",
+  "bodytype": "CABRIO" | "ESTATE_CAR" | "LIMOUSINE" | "OFFROAD" | "OTHER_CAR" | "SMALL_CAR" | "SPORTS_CAR" | "VAN",
+  "numberOfDoors": "TWO_OR_THREE" | "FOUR_OR_FIVE" | "SIX_OR_SEVEN",
+  "driveType": "ALL_WHEEL" | "FRONT" | "REAR",
+  "numberOfSeats": integer,
+  "performance_kw": integer,
+  "cubic_capacity": integer,
+  "price_max": integer,
+  "mealage_max": integer,
+  "first_registration_year_minimum": integer
+}
+
+❌ Do not ask about brands, models, colors, readiness, price negotiation, or any features not in the schema.
+
+---
+
+📌 The user’s last message was: "{lastUserMessage}"
+
+If the user sounds confused or unsure (e.g. says “I don’t know”, “hilf mir”, “keine Ahnung”),  
+✅ then explain briefly what the missing value means, and ask in simpler terms.
+
+If the user responds with a question like “Which is better?”, “What would you suggest?”, “Welcher Preis ist gut?”,  
+✅ then offer a reasonable example value (based on common sense or previous answers),  
+✅ and follow it with a kind question like “Would that work for you?”
+
+---
+
+🛑 Never repeat the same sentence twice.  
+🛑 Do not mention JSON or technical terms.  
+✅ Always use one friendly sentence, in the user’s language (usually German).
+""".strip()
+
+
 
 def get_system_prompt(phase, last_user_message=""):
     if phase == "initial":
         return car_initial_prompt
     elif phase == "followup":
-        template = last_user_message  # or any constant string you use
+        template = followup_instruction  # or any constant string you use
         return template.replace("{lastUserMessage}", last_user_message)
     else:
         return "You are an AI, a helpful assistant"
@@ -112,7 +156,7 @@ def get_system_prompt(phase, last_user_message=""):
 
 
 
-def get_gpt_message(user_input, system_prompt, temperature_value, max_tokens, chat_history, api_key, endpoint, deployment_name):
+def get_gpt_message(user_input, system_prompt, temperature_value, max_tokens):
     # Prepare the headers
     headers = {
         "Content-Type": "application/json",
@@ -122,7 +166,7 @@ def get_gpt_message(user_input, system_prompt, temperature_value, max_tokens, ch
     # Build the full message list
     messages = [{"role": "system", "content": system_prompt}]
     
-    for msg in chat_history:
+    for msg in st.session_state.messages:
         messages.append({"role": msg["role"], "content": msg["content"]})
     
     messages.append({"role": "user", "content": user_input})
@@ -211,19 +255,21 @@ if st.button("Send")  and user_input :
 
 
     if not awaitingFollowUp:
-        response = get_gpt_message(user_input, get_system_prompt("initial"), 0.4, 200, st.session_state.messages, api_key, endpoint, deployment_name)
+        response = get_gpt_message(user_input, get_system_prompt("initial"), 0.4, 200)
         try:
             parsed_json = json.loads(response)
             null_fields = [key for key, value in parsed_json.items() if value is None]
 
             if null_fields:
-
-                print("Missing fields:", null_fields)
-                st.write("Missing fields:", null_fields)
+               
+               followUpPrompt = build_followup_prompt(parsed_json, null_fields, last_user_message=user_input)  
+               followUpQuestion = get_gpt_message(followUpPrompt, get_system_prompt("followup",user_input), 0.4, 150); 
+               st.session_state.messages.append({"role": "assistant", "content": followUpQuestion})
+               st.write("Missing fields:", null_fields)
+               st.rerun()
             else:
-                print("All fields filled:", parsed_json)
-                st.write("All fields filled:", parsed_json)
-   
+               st.write("All fields filled:", parsed_json)
+
         except json.JSONDecodeError:
          st.warning("The response is not valid JSON:")
          st.write(response)
