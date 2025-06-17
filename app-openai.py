@@ -219,8 +219,10 @@ if st.button("Send")  and user_input :
             if null_fields:
 
                 print("Missing fields:", null_fields)
+                st.write("Missing fields:", null_fields)
             else:
                 print("All fields filled:", parsed_json)
+                st.write("All fields filled:", parsed_json)
    
         except json.JSONDecodeError:
          st.warning("The response is not valid JSON:")
