@@ -53,8 +53,6 @@ awaitingFollowUp = False
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-if "input" not in st.session_state:
-    st.session_state.input = ""
 
 
 # Initialize session state for memory
@@ -266,10 +264,12 @@ Return only the follow-up question – in {lang_hint}.
 
 # Streamlit UI
 st.title("💬 Azure GPT Chat")
-user_input = st.text_input("You:", key="input")
 
+with st.form(key="chat_form", clear_on_submit=True):
+    user_input = st.text_input("You:", key="input")
+    submitted = st.form_submit_button("Send")
 
-if st.button("Send")  and user_input :
+if submitted and user_input:
 
      # Append user message to memory
     st.session_state.messages.append({"role": "user", "content": user_input})
@@ -288,12 +288,12 @@ if st.button("Send")  and user_input :
                st.session_state.messages.append({"role": "assistant", "content": followUpQuestion})
                st.write("Missing fields:", null_fields)
                awaitingFollowUp = True
-               st.session_state.input = ""
+       
             
             else:
                awaitingFollowUp = False
                st.session_state.messages.append({"role": "assistant", "content": response})
-               st.session_state.input = ""
+        
                
             
             render_chat_history()
@@ -319,7 +319,7 @@ if st.button("Send")  and user_input :
                helpQuestion = get_gpt_message(help, get_system_prompt("followup"), 0.4, 150); 
                st.session_state.messages.append({"role": "assistant", "content": helpQuestion})
                render_chat_history()
-               st.session_state.input = ""
+              
 
             if still_null_fields:
                
@@ -328,7 +328,7 @@ if st.button("Send")  and user_input :
                st.session_state.messages.append({"role": "assistant", "content": followqt})
                st.write("Missing fields:", still_null_fields)
                render_chat_history()
-               st.session_state.input = ""
+               
             else:
                awaitingFollowUp = False
                final_json = json.dumps(currentPreferences, indent=4)
@@ -338,7 +338,7 @@ if st.button("Send")  and user_input :
                 )
                st.session_state.messages.append({"role": "assistant", "content": final_message})
                render_chat_history()
-               st.session_state.input = ""
+              
 
         except json.JSONDecodeError:
          st.warning("The response is not valid JSON:")
