@@ -418,7 +418,7 @@ if st.button("Find Similar Cars")  and user_input :
     if response.status_code == 200:
         assistant_message = response.json()["choices"][0]["message"]["content"]
         st.session_state.messages.append({"role": "assistant", "content": assistant_message})
-        st.experimental_rerun()
+        st.rerun()
     else:
         st.error(f"Error {response.status_code}: {response.text}")
 
