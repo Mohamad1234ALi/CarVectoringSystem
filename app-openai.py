@@ -23,12 +23,30 @@ endpoint = st.secrets["endpoint"]
 deployment_name = st.secrets["deployment_name"]
 api_version = st.secrets["api_version"]
 
-
+currentPreferences = {} 
 url = f"{endpoint}openai/deployments/{deployment_name}/chat/completions?api-version={api_version}"
 headers = {
     "Content-Type": "application/json",
     "api-key": api_key
 }
+
+def merge_preferences(current: dict, updates: dict) -> None:
+    if updates.get("gearbox"): current["gearbox"] = updates["gearbox"]
+    if updates.get("fueltype"): current["fueltype"] = updates["fueltype"]
+    if updates.get("bodytype"): current["bodytype"] = updates["bodytype"]
+    if updates.get("numberOfDoors"): current["numberOfDoors"] = updates["numberOfDoors"]
+    if updates.get("driveType"): current["driveType"] = updates["driveType"]
+
+    if updates.get("numberOfSeats") is not None: current["numberOfSeats"] = updates["numberOfSeats"]
+    if updates.get("performance_kw") is not None: current["performance_kw"] = updates["performance_kw"]
+    if updates.get("cubic_capacity") is not None: current["cubic_capacity"] = updates["cubic_capacity"]
+    if updates.get("price_max") is not None: current["price_max"] = updates["price_max"]
+    if updates.get("mealage_max") is not None: current["mealage_max"] = updates["mealage_max"]
+    if updates.get("first_registration_year_minimum") is not None:
+        current["first_registration_year_minimum"] = updates["first_registration_year_minimum"]
+
+
+
 
 
 awaitingFollowUp = False
@@ -254,23 +272,71 @@ if st.button("Send")  and user_input :
 
 
     if not awaitingFollowUp:
-        response = get_gpt_message(user_input, get_system_prompt("initial"), 0.4, 200)
+        response = get_gpt_message(user_input, get_system_prompt("initial"), 0.4, 150)
         try:
-            parsed_json = json.loads(response)
-            null_fields = [key for key, value in parsed_json.items() if value is None]
+            currentPreferences = json.loads(response)
+            null_fields = [key for key, value in currentPreferences.items() if value is None]
 
             if null_fields:
                
-               followUpPrompt = build_followup_prompt(parsed_json, null_fields, last_user_message=user_input)  
+               followUpPrompt = build_followup_prompt(currentPreferences, null_fields, "en", last_user_message=user_input)  
                followUpQuestion = get_gpt_message(followUpPrompt, get_system_prompt("followup",user_input), 0.4, 150); 
                st.session_state.messages.append({"role": "assistant", "content": followUpQuestion})
                st.write("Missing fields:", null_fields)
+               awaitingFollowUp = True
             
             else:
-               st.write("All fields filled:", parsed_json)
+               awaitingFollowUp = False
+               st.session_state.messages.append({"role": "assistant", "content": response})
                
             st.session_state.user_input = "" 
             render_chat_history()
         except json.JSONDecodeError:
          st.warning("The response is not valid JSON:")
          st.write(response)
+
+    else:   
+        # If we are awaiting a follow-up, just show the last question
+        followupresponse = get_gpt_message(user_input, get_system_prompt("followup"), 0.4, 300)
+
+        try:
+
+            followupPrefs = json.loads(followupresponse)
+            merge_preferences(currentPreferences, followupPrefs)
+            still_null_fields = [key for key, value in currentPreferences.items() if value is None]
+
+            confused_keywords = ["hilfe", "hilf", "weiß nicht", "keine ahnung", "help"]
+            user_is_confused = any(keyword in user_input.lower() for keyword in confused_keywords)
+
+            if user_is_confused:
+               help = build_followup_prompt(currentPreferences, still_null_fields, "en", last_user_message=user_input)  
+               helpQuestion = get_gpt_message(help, get_system_prompt("followup"), 0.4, 150); 
+               st.session_state.messages.append({"role": "assistant", "content": helpQuestion})
+               render_chat_history()
+
+            if still_null_fields:
+               
+               folowhelp = build_followup_prompt(currentPreferences, still_null_fields, "en", last_user_message=user_input)  
+               followqt = get_gpt_message(folowhelp, get_system_prompt("followup"), 0.4, 150); 
+               st.session_state.messages.append({"role": "assistant", "content": followqt})
+               st.write("Missing fields:", still_null_fields)
+               render_chat_history()
+            else:
+               awaitingFollowUp = False
+               final_json = json.dumps(currentPreferences, indent=4)
+               final_message = (
+                    "Thanks! I have all the information now.\n\n"
+                    "Here is the summary of your car wishes:\n" + final_json
+                )
+               st.session_state.messages.append({"role": "assistant", "content": final_message})
+               render_chat_history()
+
+        except json.JSONDecodeError:
+         st.warning("The response is not valid JSON:")
+         st.write(followupresponse)   
+
+
+
+        
+
+
