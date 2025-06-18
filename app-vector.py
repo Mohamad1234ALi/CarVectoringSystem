@@ -742,7 +742,7 @@ if submitted and user_input:
                     "Here is the summary of your car wishes:\n" + final_json
                 )
                st.session_state.messages.append({"role": "assistant", "content": final_message})
-               render_chat_history()
+               # render_chat_history()
                ordered_keys = [
                    "gearbox",
                    "fueltype",
