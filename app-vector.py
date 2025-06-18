@@ -711,6 +711,7 @@ if submitted and user_input:
     else:   
         # If we are awaiting a follow-up, just show the last question
         followupresponse = get_gpt_message(user_input, get_system_prompt("followup"), 0.4, 300)
+        st.print(followupresponse)
 
         try:
 
