@@ -464,7 +464,7 @@ if st.button("Find Similar Cars") :
         st.write("❌ No similar cars found.")
 
 
-currentPreferences = {} 
+
 url = f"{endpoint}openai/deployments/{deployment_name}/chat/completions?api-version={api_version}"
 headers = {
     "Content-Type": "application/json",
@@ -496,6 +496,8 @@ if "awaitingFollowUp" not in st.session_state:
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
+if "currentPreferences" not in st.session_state:
+    st.session_state.currentPreferences = {}
 
 car_initial_prompt = (
     "You are a smart and helpful car assistant. Your task is to understand what kind of car the user is looking for, based on natural language.\n\n"
@@ -685,12 +687,12 @@ if submitted and user_input:
     if not st.session_state.awaitingFollowUp:
         response = get_gpt_message(user_input, get_system_prompt("initial"), 0.4, 150)
         try:
-            currentPreferences = json.loads(response)
-            null_fields = [key for key, value in currentPreferences.items() if value is None]
+            st.session_state.currentPreferences = json.loads(response)
+            null_fields = [key for key, value in st.session_state.currentPreferences.items() if value is None]
 
             if null_fields:
                
-               followUpPrompt = build_followup_prompt(currentPreferences, null_fields, "en", last_user_message=user_input)  
+               followUpPrompt = build_followup_prompt(st.session_state.currentPreferences, null_fields, "en", last_user_message=user_input)  
                followUpQuestion = get_gpt_message(followUpPrompt, get_system_prompt("followup",user_input), 0.4, 150); 
                st.session_state.messages.append({"role": "assistant", "content": followUpQuestion})
                st.write("not followupwaiting but nll")
@@ -717,17 +719,17 @@ if submitted and user_input:
 
             followupPrefs = json.loads(followupresponse)
             st.write("current Preferences before merge:")
-            st.write(currentPreferences)
-            merge_preferences(currentPreferences, followupPrefs)
+            st.write(st.session_state.currentPreferences)
+            merge_preferences(st.session_state.currentPreferences, followupPrefs)
             st.write("Current Preferences after merge:")
-            st.write(currentPreferences)
-            still_null_fields = [key for key, value in currentPreferences.items() if value is None]
+            st.write(st.session_state.currentPreferences)
+            still_null_fields = [key for key, value in st.session_state.currentPreferences.items() if value is None]
 
             confused_keywords = ["hilfe", "hilf", "weiß nicht", "keine ahnung", "help"]
             user_is_confused = any(keyword in user_input.lower() for keyword in confused_keywords)
 
             if user_is_confused:
-               help = build_followup_prompt(currentPreferences, still_null_fields, "en", last_user_message=user_input)  
+               help = build_followup_prompt(st.session_state.currentPreferences, still_null_fields, "en", last_user_message=user_input)  
                helpQuestion = get_gpt_message(help, get_system_prompt("followup"), 0.4, 150); 
                st.session_state.messages.append({"role": "assistant", "content": helpQuestion})
                st.write("here open is confused")
@@ -736,7 +738,7 @@ if submitted and user_input:
 
             if still_null_fields:
                
-               folowhelp = build_followup_prompt(currentPreferences, still_null_fields, "en", last_user_message=user_input)  
+               folowhelp = build_followup_prompt(st.session_state.currentPreferences, still_null_fields, "en", last_user_message=user_input)  
                followqt = get_gpt_message(folowhelp, get_system_prompt("followup"), 0.4, 150); 
                st.session_state.messages.append({"role": "assistant", "content": followqt})
                      
@@ -760,7 +762,7 @@ if submitted and user_input:
                    "mealage_max",
                    "first_registration_year_minimum"
                ]
-               ordered_values = [currentPreferences.get(key) for key in ordered_keys]
+               ordered_values = [st.session_state.currentPreferences.get(key) for key in ordered_keys]
                st.write(ordered_values)
                query_vector = preprocess_input(
                      ordered_values[2],  # category
