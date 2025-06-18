@@ -691,13 +691,14 @@ if submitted and user_input:
                followUpPrompt = build_followup_prompt(currentPreferences, null_fields, "en", last_user_message=user_input)  
                followUpQuestion = get_gpt_message(followUpPrompt, get_system_prompt("followup",user_input), 0.4, 150); 
                st.session_state.messages.append({"role": "assistant", "content": followUpQuestion})
-               st.write("Missing fields:", null_fields)
+               st.write("not followupwaiting but nll")
                awaitingFollowUp = True
        
             
             else:
                awaitingFollowUp = False
                st.session_state.messages.append({"role": "assistant", "content": response})
+               st.write("not followupwaiting but finish")
         
                
             
@@ -723,6 +724,7 @@ if submitted and user_input:
                help = build_followup_prompt(currentPreferences, still_null_fields, "en", last_user_message=user_input)  
                helpQuestion = get_gpt_message(help, get_system_prompt("followup"), 0.4, 150); 
                st.session_state.messages.append({"role": "assistant", "content": helpQuestion})
+               st.write("here open is confused")
                render_chat_history()
               
 
@@ -731,10 +733,9 @@ if submitted and user_input:
                folowhelp = build_followup_prompt(currentPreferences, still_null_fields, "en", last_user_message=user_input)  
                followqt = get_gpt_message(folowhelp, get_system_prompt("followup"), 0.4, 150); 
                st.session_state.messages.append({"role": "assistant", "content": followqt})
-               st.write("Missing fields:", still_null_fields)
-               render_chat_history()
+                     
                st.write("here open is still null")
-               
+               render_chat_history()
             else:
                awaitingFollowUp = False
                st.write("here open is not null")
@@ -794,7 +795,7 @@ if submitted and user_input:
                          st.write("---")
                      else:
                       st.write(f"❌ Car with ID {real_ID} not found in DynamoDB.")
-                 else:
+               else:
                     st.write("❌ No similar cars found.")
 
         except json.JSONDecodeError:
