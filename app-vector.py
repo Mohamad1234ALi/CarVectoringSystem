@@ -733,9 +733,11 @@ if submitted and user_input:
                st.session_state.messages.append({"role": "assistant", "content": followqt})
                st.write("Missing fields:", still_null_fields)
                render_chat_history()
+               st.write("here open is still null")
                
             else:
                awaitingFollowUp = False
+               st.write("here open is not null")
                # st.session_state.messages.append({"role": "assistant", "content": final_message})
                # render_chat_history()
                ordered_keys = [
