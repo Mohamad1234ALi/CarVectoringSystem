@@ -716,6 +716,8 @@ if submitted and user_input:
         try:
 
             followupPrefs = json.loads(followupresponse)
+            st.write("current Preferences before merge:")
+            st.write(currentPreferences)
             merge_preferences(currentPreferences, followupPrefs)
             st.write("Current Preferences after merge:")
             st.write(currentPreferences)
