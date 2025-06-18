@@ -215,6 +215,39 @@ def search_similar_cars_with_filters(
     random.shuffle(filtered)
     return filtered[:numberofcars], count_result
   
+def search_similar_cars_without_filters(
+    query_vector, 
+    numberofcars, 
+    similarity_threshold,
+    
+):
+  
+    # Construct the query with bool filter and knn must
+    query = {
+     "size": numberofcars * 10,
+     "query": {
+        "knn": {
+            "vector": {
+                "vector": query_vector.tolist(),
+                "k": numberofcars * 10
+            }
+        }
+      }
+    }
+
+
+    
+    # Execute the search
+    response = client.search(index=INDEX_NAME, body=query)
+    results = response["hits"]["hits"]
+    count_result = len(results)
+
+    # Optional: filter results by similarity threshold on _score
+    filtered = [r for r in results if r["_score"] >= similarity_threshold]
+    random.shuffle(filtered)
+    return filtered[:numberofcars], count_result
+
+
 def search_count_Filter(
     client,
     index_name,
@@ -710,8 +743,64 @@ if submitted and user_input:
                 )
                st.session_state.messages.append({"role": "assistant", "content": final_message})
                render_chat_history()
-              
+               ordered_keys = [
+                   "gearbox",
+                   "fueltype",
+                   "bodytype",
+                   "numberOfDoors",
+                   "driveType",
+                   "numberOfSeats",
+                   "performance_kw",
+                   "cubic_capacity",
+                   "price_max",
+                   "mealage_max",
+                   "first_registration_year_minimum"
+               ]
+               ordered_values = [currentPreferences.get(key) for key in ordered_keys]
+               query_vector = preprocess_input(
+                     ordered_values[2],  # category
+                     ordered_values[3],  # doors
+                     ordered_values[10],  # first_reg
+                     ordered_values[0],  # gearbox
+                     ordered_values[5],  # seats
+                     ordered_values[1],  # fuel_type
+                     ordered_values[6],  # performance
+                     ordered_values[4],  # drivetype
+                     ordered_values[7]   # cubiccapacity
+                )
+               results, count_results = search_similar_cars_without_filters(
+                        query_vector,
+                        numberofcars,
+                        similarity_threshold=percentagefinal,
+                )
+               if results:
+                 # Filtering the data depends on the choice of the user
+                 st.markdown("<br>", unsafe_allow_html=True)
+                 for car in results:
+            
+                     car_data = car["_source"]       
+                     real_ID = car_data["CarID"]
+                     full_car_info = get_car_by_id(real_ID)
+        
+                     if full_car_info:
+                         st.write(f"🆔 ID: {full_car_info['CarID']}")
+                         st.write(f"🔥 Body Type: {full_car_info.get('BodyType', 'N/A')}")
+                         st.write(f"📏 Make: {full_car_info['Make']}  | 📏 Model: {full_car_info.get('Model', 'N/A')} ")
+                         st.write(f"⚙️ Gearbox: {full_car_info.get('GearBox', 'N/A')} | ⛽ Fuel Type : {full_car_info.get('Fuel', 'N/A')}")
+                         st.write(f"💡 Body Color: {full_car_info.get('BodyColor', 'N/A')} | 🚪 Doors : {full_car_info.get('NumberOfDoors', 'N/A')}")
+                         st.write(f"🚙 Drive Type: {full_car_info.get('DriveType', 'N/A')} | 🚗📏 Mileage : {full_car_info.get('Mileage', 'N/A')}")
+                         st.write(f"🏁 Cubic Capacity: {full_car_info.get('CubicCapacity', 'N/A')} | ⚡ Performance : {full_car_info.get('Power', 'N/A')}")
+                         st.write(f"👥 Number Of Seats: {full_car_info.get('NumberOfSeats', 'N/A')} | 🛠️ Usage State : {full_car_info.get('UsageState', 'N/A')}")
+                         st.write(f"📅 First Registration: {full_car_info.get('FirstRegistration', 'N/A')} | 💰 Price: {full_car_info.get('Price', 'N/A')}")
+                         #st.write(f"📅 Score : {car['_score']}")
+                         st.write("---")
+                     else:
+                      st.write(f"❌ Car with ID {real_ID} not found in DynamoDB.")
+                 else:
+                    st.write("❌ No similar cars found.")
 
         except json.JSONDecodeError:
          st.warning("The response is not valid JSON:")
          st.write(followupresponse)           
+
+
