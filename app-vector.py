@@ -769,12 +769,13 @@ if submitted and user_input:
                      ordered_values[3],  # doors
                      ordered_values[10],  # first_reg
                      ordered_values[0],  # gearbox
-                     ordered_values[5],  # seats
+                     str(ordered_values[5]),  # seats
                      ordered_values[1],  # fuel_type
                      ordered_values[6],  # performance
                      ordered_values[4],  # drivetype
                      ordered_values[7]   # cubiccapacity
                 )
+              
                results, count_results = search_similar_cars_without_filters(
                         query_vector,
                         numberofcars,
