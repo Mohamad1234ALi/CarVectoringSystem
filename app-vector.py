@@ -566,7 +566,7 @@ If the user responds with a question like “Which is better?”, “What would 
 
 🛑 Never repeat the same sentence twice.  
 🛑 Do not mention JSON or technical terms.  
-✅ Always use one friendly sentence, in the user’s language (usually German).
+✅ Always use one friendly sentence, in the user’s language (usually english).
 """.strip()
 
 
@@ -708,9 +708,9 @@ if submitted and user_input:
          st.warning("The response is not valid JSON:")
          st.write(response)
 
-    else:   
+    else:  
         # If we are awaiting a follow-up, just show the last question
-        followupresponse = get_gpt_message(user_input, get_system_prompt("followup"), 0.4, 300)
+        followupresponse = get_gpt_message(user_input, get_system_prompt("initial"), 0.4, 300)
         st.write(followupresponse)
 
         try:
