@@ -490,7 +490,9 @@ def merge_preferences(current: dict, updates: dict) -> None:
 
 
 
-awaitingFollowUp = False
+if "awaitingFollowUp" not in st.session_state:
+    st.session_state.awaitingFollowUp = False
+
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
@@ -680,7 +682,7 @@ if submitted and user_input:
     st.session_state.messages.append({"role": "user", "content": user_input})
 
 
-    if not awaitingFollowUp:
+    if not st.session_state.awaitingFollowUp:
         response = get_gpt_message(user_input, get_system_prompt("initial"), 0.4, 150)
         try:
             currentPreferences = json.loads(response)
@@ -692,11 +694,10 @@ if submitted and user_input:
                followUpQuestion = get_gpt_message(followUpPrompt, get_system_prompt("followup",user_input), 0.4, 150); 
                st.session_state.messages.append({"role": "assistant", "content": followUpQuestion})
                st.write("not followupwaiting but nll")
-               awaitingFollowUp = True
-       
-            
+               st.session_state.awaitingFollowUp = True
+
             else:
-               awaitingFollowUp = False
+               st.session_state.awaitingFollowUp = False
                st.session_state.messages.append({"role": "assistant", "content": response})
                st.write("not followupwaiting but finish")
         
@@ -737,7 +738,7 @@ if submitted and user_input:
                st.write("here open is still null")
                render_chat_history()
             else:
-               awaitingFollowUp = False
+               st.session_state.awaitingFollowUp = False
                st.write("here open is not null")
                # st.session_state.messages.append({"role": "assistant", "content": final_message})
                # render_chat_history()
