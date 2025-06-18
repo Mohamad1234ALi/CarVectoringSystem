@@ -717,6 +717,8 @@ if submitted and user_input:
 
             followupPrefs = json.loads(followupresponse)
             merge_preferences(currentPreferences, followupPrefs)
+            st.write("Current Preferences after merge:")
+            st.write(currentPreferences)
             still_null_fields = [key for key, value in currentPreferences.items() if value is None]
 
             confused_keywords = ["hilfe", "hilf", "weiß nicht", "keine ahnung", "help"]
