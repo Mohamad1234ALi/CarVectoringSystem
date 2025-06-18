@@ -736,12 +736,7 @@ if submitted and user_input:
                
             else:
                awaitingFollowUp = False
-               final_json = json.dumps(currentPreferences, indent=4)
-               final_message = (
-                    "Thanks! I have all the information now.\n\n"
-                    "Here is the summary of your car wishes:\n" + final_json
-                )
-               st.session_state.messages.append({"role": "assistant", "content": final_message})
+               # st.session_state.messages.append({"role": "assistant", "content": final_message})
                # render_chat_history()
                ordered_keys = [
                    "gearbox",
@@ -757,6 +752,7 @@ if submitted and user_input:
                    "first_registration_year_minimum"
                ]
                ordered_values = [currentPreferences.get(key) for key in ordered_keys]
+               st.write(ordered_values)
                query_vector = preprocess_input(
                      ordered_values[2],  # category
                      ordered_values[3],  # doors
