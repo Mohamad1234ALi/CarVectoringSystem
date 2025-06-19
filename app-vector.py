@@ -655,7 +655,7 @@ with st.form(key="chat_form", clear_on_submit=True):
 if submitted and user_input:
 
 
-    st.session_state.chat_history.append({"role": "user", "content": user_input})
+    #st.session_state.chat_history.append({"role": "user", "content": user_input})
 
     user_input_lower = user_input.lower()
     
