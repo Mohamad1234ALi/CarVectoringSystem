@@ -568,7 +568,7 @@ If the user responds with a question like “Which is better?”, “What would 
 
 🛑 Never repeat the same sentence twice.  
 🛑 Do not mention JSON or technical terms.  
-✅ Always use one friendly sentence, in the user’s language (usually German).
+✅ Always use one friendly sentence, in the user’s language (usually German).
 """.strip()
 
 
@@ -627,7 +627,7 @@ def get_gpt_message(user_input, system_prompt, temperature_value, max_tokens):
         return f"[ERROR] {str(e)}"
 
 
-def build_followup_prompt(prefs, missing_fields, language="en", last_user_message=""):
+def build_followup_prompt(prefs, missing_fields, last_user_message , language="en"):
     # Serialize preferences as pretty JSON
     prefs_json = json.dumps(prefs, indent=2)
 
@@ -651,7 +651,7 @@ Some values are still missing: {", ".join(missing_fields)}.
 
 The user just wrote: "{last_user_message}".
 
-If they seem unsure or ask for help (e.g. “Ich weiß nicht”, “Hilf mir”, “Hilfe”, “Help me”), do NOT repeat the same question.
+If they seem unsure or ask for help (e.g. “Ich weiß nicht”, “Hilf mir”, “Hilfe”, “Help me” , “Keine Ahnung” ), do NOT repeat the same question.
 
 Instead:
 - Briefly explain what the missing value means in simple, friendly language
@@ -695,8 +695,8 @@ if submitted and user_input:
         
             if null_fields:
                
-               followUpPrompt = build_followup_prompt(st.session_state.currentPreferences, null_fields, "en", last_user_message=user_input)  
-               followUpQuestion = get_gpt_message(followUpPrompt, get_system_prompt("followup",user_input), 0.4, 150); 
+               followUpPrompt = build_followup_prompt(st.session_state.currentPreferences, null_fields, user_input , "en")  
+               followUpQuestion = get_gpt_message(followUpPrompt, get_system_prompt("followup",last_user_message=user_input), 0.4, 150); 
                st.session_state.messages.append({"role": "assistant", "content": followUpQuestion})
                st.write("not followupwaiting but nll")
                st.session_state.awaitingFollowUp = True
@@ -736,8 +736,8 @@ if submitted and user_input:
 
             if user_is_confused:
                
-               help = build_followup_prompt(st.session_state.currentPreferences, still_null_fields, "en", last_user_message=user_input)  
-               helpQuestion = get_gpt_message(help, get_system_prompt("followup",user_input), 0.4, 250); 
+               help = build_followup_prompt(st.session_state.currentPreferences, still_null_fields, user_input, "en")  
+               helpQuestion = get_gpt_message(help, get_system_prompt("followup",last_user_message=user_input), 0.4, 250); 
                st.session_state.messages.append({"role": "assistant", "content": helpQuestion})
                st.write("here open is confused")
                render_chat_history()   
@@ -746,8 +746,8 @@ if submitted and user_input:
 
             if still_null_fields:
                
-               folowhelp = build_followup_prompt(st.session_state.currentPreferences, still_null_fields, "en", last_user_message=user_input)  
-               followqt = get_gpt_message(folowhelp, get_system_prompt("followup",user_input), 0.4, 150); 
+               folowhelp = build_followup_prompt(st.session_state.currentPreferences, still_null_fields, user_input , "en" )  
+               followqt = get_gpt_message(folowhelp, get_system_prompt("followup",last_user_message=user_input), 0.4, 150); 
                st.session_state.messages.append({"role": "assistant", "content": followqt})
                      
                st.write("here open is still null")
