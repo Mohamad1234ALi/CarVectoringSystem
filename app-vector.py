@@ -688,7 +688,14 @@ if submitted and user_input:
         response = get_gpt_message(user_input, get_system_prompt("initial"), 0.4, 150)
         try:
             st.session_state.currentPreferences = json.loads(response)
+
+
+            st.session_state.messages.append({"role": "assistant", "content": json.dumps(st.session_state.currentPreferences, indent=2)})
+
+
             null_fields = [key for key, value in st.session_state.currentPreferences.items() if value is None]
+
+          
 
             if null_fields:
                
@@ -721,6 +728,11 @@ if submitted and user_input:
             st.write("current Preferences before merge:")
             st.write(st.session_state.currentPreferences)
             merge_preferences(st.session_state.currentPreferences, followupPrefs)
+
+            st.session_state.messages.append({"role": "assistant", "content": json.dumps(st.session_state.currentPreferences, indent=2)})
+
+
+
             st.write("Current Preferences after merge:")
             st.write(st.session_state.currentPreferences)
             still_null_fields = [key for key, value in st.session_state.currentPreferences.items() if value is None]
