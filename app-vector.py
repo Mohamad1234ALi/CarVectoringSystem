@@ -623,7 +623,7 @@ def call_gpt(user_input, system_prompt, temperature=0.4, max_tokens=300):
         messages.append({"role": msg["role"], "content": msg["content"]})
 
     messages.append({"role": "user", "content": user_input})
-    st.session_state.chat_history.append({"role": "user", "content": user_input})
+   
 
     # Prepare the request body
     body = {
@@ -658,7 +658,7 @@ with st.form(key="chat_form", clear_on_submit=True):
 
 if submitted and user_input:
 
-
+    st.session_state.chat_history.append({"role": "user", "content": user_input})
     
 
     user_input_lower = user_input.lower()
@@ -673,7 +673,7 @@ if submitted and user_input:
             st.session_state.current_preferences = prefs
             missing = extract_missing_fields(prefs)
             if missing:
-                followup_prompt = build_follow_up_prompt(prefs, missing, "en", user_input)
+                followup_prompt = build_follow_up_prompt(prefs, missing, "de", user_input)
                 followup_question = call_gpt(followup_prompt, get_system_prompt("followup", user_input))
                 st.session_state.chat_history.append({"role": "assistant", "content": followup_question})
                 st.session_state.awaiting_followup = True
@@ -692,11 +692,11 @@ if submitted and user_input:
             user_is_confused = any(phrase in user_input_lower for phrase in ["hilfe", "hilf", "weiß nicht", "keine ahnung", "help"])
             
             if user_is_confused:
-                followup_prompt = build_follow_up_prompt(st.session_state.current_preferences, missing, "en", user_input)
+                followup_prompt = build_follow_up_prompt(st.session_state.current_preferences, missing, "de", user_input)
                 help_question = call_gpt(followup_prompt, get_system_prompt("followup"), temperature=0.4, max_tokens=250)
                 st.session_state.chat_history.append({"role": "assistant", "content": help_question})
             elif missing:
-                followup_prompt = build_follow_up_prompt(st.session_state.current_preferences, missing, "en", user_input)
+                followup_prompt = build_follow_up_prompt(st.session_state.current_preferences, missing, "de", user_input)
                 followup_question = call_gpt(followup_prompt, get_system_prompt("followup"))
                 st.session_state.chat_history.append({"role": "assistant", "content": followup_question})
             else:
