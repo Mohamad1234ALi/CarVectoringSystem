@@ -605,6 +605,8 @@ def extract_missing_fields(prefs):
 
 
 def call_gpt(user_input, system_prompt, temperature=0.4, max_tokens=300):
+
+    url_new= f"{endpoint}openai/deployments/{deployment_name}/chat/completions?api-version={api_version}"
     # Prepare the headers
     headers = {
         "Content-Type": "application/json",
@@ -627,7 +629,7 @@ def call_gpt(user_input, system_prompt, temperature=0.4, max_tokens=300):
     }
 
     try:
-        response = requests.post(url, headers=headers, json=body)
+        response = requests.post(url_new, headers=headers, json=body)
         response.raise_for_status()
         data = response.json()
 
