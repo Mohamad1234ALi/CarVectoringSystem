@@ -573,7 +573,7 @@ If the user responds with a question like “Which is better?”, “What would 
 
 
 
-def get_system_prompt(phase, last_user_message=""):
+def get_system_prompt(phase, last_user_message):
     if phase == "initial":
         return car_initial_prompt
     elif phase == "followup":
@@ -737,7 +737,7 @@ if submitted and user_input:
             if user_is_confused:
                
                help = build_followup_prompt(st.session_state.currentPreferences, still_null_fields, "en", last_user_message=user_input)  
-               helpQuestion = get_gpt_message(help, get_system_prompt("followup"), 0.4, 250); 
+               helpQuestion = get_gpt_message(help, get_system_prompt("followup",user_input), 0.4, 250); 
                st.session_state.messages.append({"role": "assistant", "content": helpQuestion})
                st.write("here open is confused")
                render_chat_history()   
@@ -747,7 +747,7 @@ if submitted and user_input:
             if still_null_fields:
                
                folowhelp = build_followup_prompt(st.session_state.currentPreferences, still_null_fields, "en", last_user_message=user_input)  
-               followqt = get_gpt_message(folowhelp, get_system_prompt("followup"), 0.4, 150); 
+               followqt = get_gpt_message(folowhelp, get_system_prompt("followup",user_input), 0.4, 150); 
                st.session_state.messages.append({"role": "assistant", "content": followqt})
                      
                st.write("here open is still null")
