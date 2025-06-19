@@ -733,10 +733,8 @@ if submitted and user_input:
                helpQuestion = get_gpt_message(help, get_system_prompt("followup"), 0.4, 150); 
                st.session_state.messages.append({"role": "assistant", "content": helpQuestion})
                st.write("here open is confused")
-               render_chat_history()
-              
-
-            if still_null_fields:
+               render_chat_history()            
+            elif still_null_fields:
                
                folowhelp = build_followup_prompt(st.session_state.currentPreferences, still_null_fields, "en", last_user_message=user_input)  
                followqt = get_gpt_message(folowhelp, get_system_prompt("followup"), 0.4, 150); 
