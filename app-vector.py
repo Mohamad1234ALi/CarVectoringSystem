@@ -612,9 +612,12 @@ def call_gpt(user_input, system_prompt, temperature=0.4, max_tokens=300):
         "Content-Type": "application/json",
         "api-key": api_key
     }
+     # Declare empty messages list
+    messages = []
 
-    # Build the full message list
-    messages = [{"role": "system", "content": system_prompt}]
+    # Add the system prompt
+    messages.append({"role": "system", "content": system_prompt})
+    
     
     for msg in st.session_state.chat_history:
         messages.append({"role": msg["role"], "content": msg["content"]})
@@ -655,7 +658,7 @@ with st.form(key="chat_form", clear_on_submit=True):
 if submitted and user_input:
 
 
-    #st.session_state.chat_history.append({"role": "user", "content": user_input})
+    st.session_state.chat_history.append({"role": "user", "content": user_input})
 
     user_input_lower = user_input.lower()
     
