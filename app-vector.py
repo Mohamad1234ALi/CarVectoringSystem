@@ -596,21 +596,6 @@ If the user responds with a question like “Which is better?”, “What would 
 🛑 Do not mention JSON or technical terms.  
 ✅ Always use one friendly sentence, in the user’s language (usually German).'''
 
-def call_gpt(messages, system_prompt, temperature=0.4, max_tokens=300):
-    headers = {
-        "api-key": api_key,
-        "Content-Type": "application/json"
-    }
-    payload = {
-        "messages": [{"role": "system", "content": system_prompt}] + messages,
-        "temperature": temperature,
-        "max_tokens": max_tokens
-    }
-
-    url = f"{endpoint}openai/deployments/{deployment_name}/chat/completions?api-version={api_version}"
-    response = requests.post(url, headers=headers, json=payload)
-    response.raise_for_status()
-    return response.json()["choices"][0]["message"]["content"]
 
 def extract_missing_fields(prefs):
     required_fields = ["gearbox", "fueltype", "bodytype", "numberOfDoors", "driveType",
@@ -619,7 +604,41 @@ def extract_missing_fields(prefs):
     return [field for field in required_fields if prefs.get(field) is None]
 
 
-   
+def call_gpt(user_input, system_prompt, temperature=0.4, max_tokens=300):
+    # Prepare the headers
+    headers = {
+        "Content-Type": "application/json",
+        "api-key": api_key
+    }
+
+    # Build the full message list
+    messages = [{"role": "system", "content": system_prompt}]
+    
+    for msg in st.session_state.chat_history:
+        messages.append({"role": msg["role"], "content": msg["content"]})
+
+    messages.append({"role": "user", "content": user_input})
+
+    # Prepare the request body
+    body = {
+        "messages": messages,
+        "temperature": temperature,
+        "max_tokens": max_tokens
+    }
+
+    try:
+        response = requests.post(url, headers=headers, json=body)
+        response.raise_for_status()
+        data = response.json()
+
+        return data["choices"][0]["message"]["content"]
+    
+    except requests.exceptions.HTTPError as e:
+        return f"[HTTP ERROR] {str(e)}"
+    except KeyError:
+        return "[ERROR] Unexpected response format"
+    except Exception as e:
+        return f"[ERROR] {str(e)}" 
 
 # Streamlit UI
 st.title("💬 Azure GPT Chat")
@@ -632,6 +651,8 @@ with st.form(key="chat_form", clear_on_submit=True):
 
 
 if submitted and user_input:
+
+
     st.session_state.chat_history.append({"role": "user", "content": user_input})
 
     user_input_lower = user_input.lower()
@@ -639,7 +660,7 @@ if submitted and user_input:
 
     if not st.session_state.awaiting_followup:
         system_prompt = get_system_prompt("initial")
-        json_text = call_gpt(st.session_state.chat_history, system_prompt)
+        json_text = call_gpt(user_input, system_prompt)
         try:
             prefs = json.loads(json_text)
             st.session_state.current_preferences = prefs
@@ -656,7 +677,7 @@ if submitted and user_input:
             st.session_state.chat_history.append({"role": "assistant", "content": "[Fehler: JSON nicht erkannt]"})
     else:
         system_prompt = get_system_prompt("initial")
-        json_text = call_gpt(st.session_state.chat_history, system_prompt)
+        json_text = call_gpt(user_input, system_prompt)
         try:
             prefs_update = json.loads(json_text)
             st.session_state.current_preferences.update({k: v for k, v in prefs_update.items() if v is not None})
