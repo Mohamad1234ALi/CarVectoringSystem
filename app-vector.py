@@ -573,7 +573,7 @@ If the user responds with a question like “Which is better?”, “What would 
 
 
 
-def get_system_prompt(phase, last_user_message):
+def get_system_prompt(phase, last_user_message=""):
     if phase == "initial":
         return car_initial_prompt
     elif phase == "followup":
