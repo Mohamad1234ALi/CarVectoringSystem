@@ -477,9 +477,12 @@ if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
     st.session_state.awaiting_followup = False
     st.session_state.current_preferences = {}
+    
+if "last_asked_field" not in st.session_state:
+    st.session_state.last_asked_field = None    
 
 # Build follow-up prompt dynamically from preferences and missing fields
-def build_follow_up_prompt(prefs, missing_fields, language="en", last_user_message=""):
+def build_follow_up_prompt(prefs, missing_fields, language="en", last_user_message="", focus_field=None):
     json_formatted = json.dumps(prefs, indent=2)
     lang_hint = {
         "de": "German",
@@ -488,9 +491,12 @@ def build_follow_up_prompt(prefs, missing_fields, language="en", last_user_messa
         "ar": "Arabic"
     }.get(language, "English")
 
+    focus_info = f"The missing value you should focus on is: {focus_field}.\n\n" if focus_field else ""
+
     return f'''
 You are helping a user find a suitable used car.
 
+{focus_info}
 Based on the previous message, we extracted the following preferences:
 
 {json_formatted}
@@ -651,7 +657,6 @@ st.title("💬 Azure GPT Chat")
 
 with st.form(key="chat_form", clear_on_submit=True):
 
-    
     user_input = st.text_input("You:", key="input")
     submitted = st.form_submit_button("Send")
 
@@ -670,7 +675,9 @@ if submitted and user_input:
             st.session_state.current_preferences = prefs
             missing = extract_missing_fields(prefs)
             if missing:
-                followup_prompt = build_follow_up_prompt(prefs, missing, "en", user_input)
+                field_to_ask = missing[0]  # Pick the first missing
+                st.session_state.last_asked_field = field_to_ask
+                followup_prompt = build_follow_up_prompt(prefs, missing, "en", user_input, focus_field=field_to_ask)
                 followup_question = call_gpt(followup_prompt, get_system_prompt("followup", user_input))
                 st.session_state.chat_history.append({"role": "assistant", "content": followup_question})
                 st.session_state.awaiting_followup = True
@@ -689,12 +696,22 @@ if submitted and user_input:
             user_is_confused = any(phrase in user_input_lower for phrase in ["hilfe", "hilf", "weiß nicht", "keine ahnung", "help"])
             
             if user_is_confused:
-                followup_prompt = build_follow_up_prompt(st.session_state.current_preferences, missing, "en", user_input)
-                help_question = call_gpt(followup_prompt, get_system_prompt("followup", user_input), temperature=0.4, max_tokens=250)
+                st.write("is confused")
+                #followup_prompt = build_follow_up_prompt(st.session_state.current_preferences, missing, "en", user_input)
+                followup_prompt = build_follow_up_prompt(
+                    st.session_state.current_preferences,
+                    missing,
+                    "en",
+                    user_input,
+                    focus_field=st.session_state.last_asked_field
+                )
+                help_question = call_gpt(followup_prompt, get_system_prompt("followup"), temperature=0.4, max_tokens=250)
                 st.session_state.chat_history.append({"role": "assistant", "content": help_question})
             elif missing:
-                followup_prompt = build_follow_up_prompt(st.session_state.current_preferences, missing, "en", user_input)
-                followup_question = call_gpt(followup_prompt, get_system_prompt("followup", user_input))
+                field_to_ask = missing[0]  # Pick the first missing
+                st.session_state.last_asked_field = field_to_ask
+                followup_prompt = build_follow_up_prompt(st.session_state.current_preferences, missing, "en", user_input, focus_field=field_to_ask)
+                followup_question = call_gpt(followup_prompt, get_system_prompt("followup"))
                 st.session_state.chat_history.append({"role": "assistant", "content": followup_question})
             else:
                 st.session_state.chat_history.append({
