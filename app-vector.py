@@ -661,6 +661,7 @@ if submitted and user_input:
     if not st.session_state.awaiting_followup:
         system_prompt = get_system_prompt("initial")
         json_text = call_gpt(user_input, system_prompt)
+        st.write(f"🤖 Assistant: {json_text}")
         try:
             prefs = json.loads(json_text)
             st.session_state.current_preferences = prefs
