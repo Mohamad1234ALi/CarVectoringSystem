@@ -568,7 +568,7 @@ If the user responds with a question like “Which is better?”, “What would 
 
 🛑 Never repeat the same sentence twice.  
 🛑 Do not mention JSON or technical terms.  
-✅ Always use one friendly sentence, in the user’s language (usually english).
+✅ Always use one friendly sentence, in the user’s language (usually German).
 """.strip()
 
 
@@ -687,16 +687,12 @@ if submitted and user_input:
     if not st.session_state.awaitingFollowUp:
         response = get_gpt_message(user_input, get_system_prompt("initial"), 0.4, 150)
         try:
+
             st.session_state.currentPreferences = json.loads(response)
-
-
-            st.session_state.messages.append({"role": "assistant", "content": json.dumps(st.session_state.currentPreferences, indent=2)})
-
-
+           # st.session_state.messages.append({"role": "assistant", "content": json.dumps(st.session_state.currentPreferences, indent=2)})
             null_fields = [key for key, value in st.session_state.currentPreferences.items() if value is None]
 
-          
-
+        
             if null_fields:
                
                followUpPrompt = build_followup_prompt(st.session_state.currentPreferences, null_fields, "en", last_user_message=user_input)  
@@ -720,21 +716,19 @@ if submitted and user_input:
     else:  
         # If we are awaiting a follow-up, just show the last question
         followupresponse = get_gpt_message(user_input, get_system_prompt("initial"), 0.4, 300)
-        st.write(followupresponse)
+        #st.write(followupresponse)
 
         try:
 
             followupPrefs = json.loads(followupresponse)
-            st.write("current Preferences before merge:")
-            st.write(st.session_state.currentPreferences)
+            #st.write("current Preferences before merge:")
+            #st.write(st.session_state.currentPreferences)
             merge_preferences(st.session_state.currentPreferences, followupPrefs)
 
-            st.session_state.messages.append({"role": "assistant", "content": json.dumps(st.session_state.currentPreferences, indent=2)})
+            #st.session_state.messages.append({"role": "assistant", "content": json.dumps(st.session_state.currentPreferences, indent=2)})
 
-
-
-            st.write("Current Preferences after merge:")
-            st.write(st.session_state.currentPreferences)
+           # st.write("Current Preferences after merge:")
+            #st.write(st.session_state.currentPreferences)
             still_null_fields = [key for key, value in st.session_state.currentPreferences.items() if value is None]
 
             confused_keywords = ["hilfe", "hilf", "weiß nicht", "keine ahnung", "help"]
@@ -743,7 +737,7 @@ if submitted and user_input:
             if user_is_confused:
                
                help = build_followup_prompt(st.session_state.currentPreferences, still_null_fields, "en", last_user_message=user_input)  
-               helpQuestion = get_gpt_message(help, get_system_prompt("followup"), 0.4, 150); 
+               helpQuestion = get_gpt_message(help, get_system_prompt("followup"), 0.4, 250); 
                st.session_state.messages.append({"role": "assistant", "content": helpQuestion})
                st.write("here open is confused")
                render_chat_history()   
