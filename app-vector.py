@@ -464,124 +464,6 @@ if st.button("Find Similar Cars") :
         st.write("❌ No similar cars found.")
 
 
-
-url = f"{endpoint}openai/deployments/{deployment_name}/chat/completions?api-version={api_version}"
-headers = {
-    "Content-Type": "application/json",
-    "api-key": api_key
-}
-
-def merge_preferences(current: dict, updates: dict) -> None:
-    if updates.get("gearbox"): current["gearbox"] = updates["gearbox"]
-    if updates.get("fueltype"): current["fueltype"] = updates["fueltype"]
-    if updates.get("bodytype"): current["bodytype"] = updates["bodytype"]
-    if updates.get("numberOfDoors"): current["numberOfDoors"] = updates["numberOfDoors"]
-    if updates.get("driveType"): current["driveType"] = updates["driveType"]
-
-    if updates.get("numberOfSeats") is not None: current["numberOfSeats"] = updates["numberOfSeats"]
-    if updates.get("performance_kw") is not None: current["performance_kw"] = updates["performance_kw"]
-    if updates.get("cubic_capacity") is not None: current["cubic_capacity"] = updates["cubic_capacity"]
-    if updates.get("price_max") is not None: current["price_max"] = updates["price_max"]
-    if updates.get("mealage_max") is not None: current["mealage_max"] = updates["mealage_max"]
-    if updates.get("first_registration_year_minimum") is not None:
-        current["first_registration_year_minimum"] = updates["first_registration_year_minimum"]
-
-
-
-
-
-if "awaitingFollowUp" not in st.session_state:
-    st.session_state.awaitingFollowUp = False
-
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-
-if "currentPreferences" not in st.session_state:
-    st.session_state.currentPreferences = {}
-
-car_initial_prompt = (
-    "You are a smart and helpful car assistant. Your task is to understand what kind of car the user is looking for, based on natural language.\n\n"
-    "You will extract their wishes and return them as a valid JSON object using the format and allowed values below.\n\n"
-    "🎯 Your goal is to fill all fields that can be reasonably inferred. Use the exact terms shown. If something is unclear or missing, set it to `null`.\n\n"
-    "Allowed values and structure:\n\n"
-    "{\n"
-    '  "gearbox": "AUTOMATIC" | "MANUAL" | "SEMI_AUTOMATIC",\n'
-    '  "fueltype": "CNG" | "DIESEL" | "ELECTRICITY" | "ETHANOL" | "HYBRID" | "HYBRID_DIESEL" | "LPG" | "OTHER" | "PETROL",\n'
-    '  "bodytype": "CABRIO" | "ESTATE_CAR" | "LIMOUSINE" | "OFFROAD" | "OTHER_CAR" | "SMALL_CAR" | "SPORTS_CAR" | "VAN",\n'
-    '  "numberOfDoors": "TWO_OR_THREE" | "FOUR_OR_FIVE" | "SIX_OR_SEVEN",\n'
-    '  "driveType": "ALL_WHEEL" | "FRONT" | "REAR",\n'
-    '  "numberOfSeats": integer,\n'
-    '  "performance_kw": integer,\n'
-    '  "cubic_capacity": integer,\n'
-    '  "price_max": integer,\n'
-    '  "mealage_max": integer,\n'
-    '  "first_registration_year_minimum": integer,\n'
-    "}\n\n"
-    '- “klein”, “für die Stadt”, “wenig PS” → SMALL_CAR, ≤ 1300ccm, ≤ 70 kW, FRONT\n'
-    '- “durchschnittlich”, “egal” → ~1600ccm, ~85kW\n'
-    '- “stark”, “Autobahn”, “Urlaub” → ≥2000ccm, ≥110kW\n\n'
-    "⚠️ Important:\n"
-    '- Convert: “1.5 Liter” → 1500ccm, “150 PS” → 110kW\n'
-    '- Accept: “ab 2016” → `first_registration_year_minimum = 2017`\n'
-    '- Accept: “bis 120.000 km” → `mealage_max = 120000`\n\n'
-    '💬 Return **only** the JSON. No extra explanation or comments. All strings in double quotes.'
-)
-
-
-followup_instruction = """
-You are a warm, helpful and intuitive assistant helping a person find a used car that fits their needs.
-
-You already received some preferences in JSON format, but a few values are still missing.
-
-🎯 Your task: Ask ONE friendly, natural follow-up question to clarify one or more of the missing parameters.
-
-❗ Only ask about parameters that exist in the following JSON schema:
-
-{
-  "gearbox": "AUTOMATIC" | "MANUAL" | "SEMI_AUTOMATIC",
-  "fueltype": "CNG" | "DIESEL" | "ELECTRICITY" | "ETHANOL" | "HYBRID" | "HYBRID_DIESEL" | "LPG" | "OTHER" | "PETROL",
-  "bodytype": "CABRIO" | "ESTATE_CAR" | "LIMOUSINE" | "OFFROAD" | "OTHER_CAR" | "SMALL_CAR" | "SPORTS_CAR" | "VAN",
-  "numberOfDoors": "TWO_OR_THREE" | "FOUR_OR_FIVE" | "SIX_OR_SEVEN",
-  "driveType": "ALL_WHEEL" | "FRONT" | "REAR",
-  "numberOfSeats": integer,
-  "performance_kw": integer,
-  "cubic_capacity": integer,
-  "price_max": integer,
-  "mealage_max": integer,
-  "first_registration_year_minimum": integer
-}
-
-❌ Do not ask about brands, models, colors, readiness, price negotiation, or any features not in the schema.
-
----
-
-📌 The user’s last message was: "{lastUserMessage}"
-
-If the user sounds confused or unsure (e.g. says “I don’t know”, “hilf mir”, “keine Ahnung”),  
-✅ then explain briefly what the missing value means, and ask in simpler terms.
-
-If the user responds with a question like “Which is better?”, “What would you suggest?”, “Welcher Preis ist gut?”,  
-✅ then offer a reasonable example value (based on common sense or previous answers),  
-✅ and follow it with a kind question like “Would that work for you?”
-
----
-
-🛑 Never repeat the same sentence twice.  
-🛑 Do not mention JSON or technical terms.  
-✅ Always use one friendly sentence, in the user’s language (usually German).
-""".strip()
-
-
-
-def get_system_prompt(phase, last_user_message=""):
-    if phase == "initial":
-        return car_initial_prompt
-    elif phase == "followup":
-        template = followup_instruction  # or any constant string you use
-        return template.replace("{lastUserMessage}", last_user_message)
-    else:
-        return "You are an AI, a helpful assistant"
-
 def render_chat_history():
     for msg in st.session_state.messages:
         if msg["role"] == "user":
@@ -590,48 +472,15 @@ def render_chat_history():
             st.markdown(f"**🤖 Assistant:** {msg['content']}")
 
 
-def get_gpt_message(user_input, system_prompt, temperature_value, max_tokens):
-    # Prepare the headers
-    headers = {
-        "Content-Type": "application/json",
-        "api-key": api_key
-    }
 
-    # Build the full message list
-    messages = [{"role": "system", "content": system_prompt}]
-    
-    for msg in st.session_state.messages:
-        messages.append({"role": msg["role"], "content": msg["content"]})
-    
-    messages.append({"role": "user", "content": user_input})
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
+    st.session_state.awaiting_followup = False
+    st.session_state.current_preferences = {}
 
-    # Prepare the request body
-    body = {
-        "messages": messages,
-        "temperature": temperature_value,
-        "max_tokens": max_tokens
-    }
-
-    try:
-        response = requests.post(url, headers=headers, json=body)
-        response.raise_for_status()
-        data = response.json()
-
-        return data["choices"][0]["message"]["content"]
-    
-    except requests.exceptions.HTTPError as e:
-        return f"[HTTP ERROR] {str(e)}"
-    except KeyError:
-        return "[ERROR] Unexpected response format"
-    except Exception as e:
-        return f"[ERROR] {str(e)}"
-
-
-def build_followup_prompt(prefs, missing_fields, last_user_message , language="en"):
-    # Serialize preferences as pretty JSON
-    prefs_json = json.dumps(prefs, indent=2)
-
-    # Language hint mapping
+# Build follow-up prompt dynamically from preferences and missing fields
+def build_follow_up_prompt(prefs, missing_fields, language="en", last_user_message=""):
+    json_formatted = json.dumps(prefs, indent=2)
     lang_hint = {
         "de": "German",
         "fr": "French",
@@ -639,19 +488,18 @@ def build_followup_prompt(prefs, missing_fields, last_user_message , language="e
         "ar": "Arabic"
     }.get(language, "English")
 
-    # Build the full prompt
-    prompt = f"""
+    return f'''
 You are helping a user find a suitable used car.
 
 Based on the previous message, we extracted the following preferences:
 
-{prefs_json}
+{json_formatted}
 
-Some values are still missing: {", ".join(missing_fields)}.
+Some values are still missing: {', '.join(missing_fields)}.
 
 The user just wrote: "{last_user_message}".
 
-If they seem unsure or ask for help (e.g. “Ich weiß nicht”, “Hilf mir”, “Hilfe”, “Help me” , “Keine Ahnung” ), do NOT repeat the same question.
+If they seem unsure or ask for help (e.g. “Ich weiß nicht”, “Hilf mir”, “Hilfe”, “Help me”), do NOT repeat the same question.
 
 Instead:
 - Briefly explain what the missing value means in simple, friendly language
@@ -667,157 +515,172 @@ Instead:
   - “How old can the car be at most?”
 
 Return only the follow-up question – in {lang_hint}.
-""".strip()
+    '''
 
-    return prompt
+# System prompts
+
+def get_system_prompt(phase, last_user_message=""):
+    if phase == "initial":
+        return '''You are a smart and helpful car assistant. Your task is to understand what kind of car the user is looking for, based on natural language.
+
+You will extract their wishes and return them as a valid JSON object using the format and allowed values below.
+
+🎯 Your goal is to fill all fields that can be reasonably inferred. Use the exact terms shown. If something is unclear or missing, set it to null.
+
+Allowed values and structure:
+
+{
+  "gearbox": "AUTOMATIC" | "MANUAL" | "SEMI_AUTOMATIC",
+  "fueltype": "CNG" | "DIESEL" | "ELECTRICITY" | "ETHANOL" | "HYBRID" | "HYBRID_DIESEL" | "LPG" | "OTHER" | "PETROL",
+  "bodytype": "CABRIO" | "ESTATE_CAR" | "LIMOUSINE" | "OFFROAD" | "OTHER_CAR" | "SMALL_CAR" | "SPORTS_CAR" | "VAN",
+  "numberOfDoors": "TWO_OR_THREE" | "FOUR_OR_FIVE" | "SIX_OR_SEVEN",
+  "driveType": "ALL_WHEEL" | "FRONT" | "REAR",
+  "numberOfSeats": integer,
+  "performance_kw": integer,
+  "cubic_capacity": integer,
+  "price_max": integer,
+  "mealage_max": integer,
+  "first_registration_year_minimum": integer
+}
+
+🧠 Interpret common phrases:
+- “klein”, “für die Stadt”, “wenig PS” → SMALL_CAR, ≤ 1300ccm, ≤ 70 kW, FRONT
+- “durchschnittlich”, “egal” → ~1600ccm, ~85kW
+- “stark”, “Autobahn”, “Urlaub” → ≥2000ccm, ≥110kW
+
+⚠️ **Important**:
+- Convert: “1.5 Liter” → 1500ccm, “150 PS” → 110kW
+- Accept: “ab 2016” → first_registration_year_minimum = 2017
+- Accept: “bis 120.000 km” → mealage_max = 120000
+
+💬 Return **only** the JSON. No extra explanation or comments. All strings in double quotes.'''
+    else:
+        return f'''You are a warm, helpful and intuitive assistant helping a person find a used car that fits their needs.
+
+You already received some preferences in JSON format, but a few values are still missing.
+
+🎯 Your task: Ask ONE friendly, natural follow-up question to clarify one or more of the missing parameters.
+
+❗ Only ask about parameters that exist in the following JSON schema:
+
+{{
+  "gearbox": "AUTOMATIC" | "MANUAL" | "SEMI_AUTOMATIC",
+  "fueltype": "CNG" | "DIESEL" | "ELECTRICITY" | "ETHANOL" | "HYBRID" | "HYBRID_DIESEL" | "LPG" | "OTHER" | "PETROL",
+  "bodytype": "CABRIO" | "ESTATE_CAR" | "LIMOUSINE" | "OFFROAD" | "OTHER_CAR" | "SMALL_CAR" | "SPORTS_CAR" | "VAN",
+  "numberOfDoors": "TWO_OR_THREE" | "FOUR_OR_FIVE" | "SIX_OR_SEVEN",
+  "driveType": "ALL_WHEEL" | "FRONT" | "REAR",
+  "numberOfSeats": integer,
+  "performance_kw": integer,
+  "cubic_capacity": integer,
+  "price_max": integer,
+  "mealage_max": integer,
+  "first_registration_year_minimum": integer
+}}
+
+❌ Do not ask about brands, models, colors, readiness, price negotiation, or any features not in the schema.
+
+---
+
+📌 The user’s last message was: "{last_user_message}"
+
+If the user sounds confused or unsure (e.g. says “I don’t know”, “hilf mir”, “keine Ahnung”),  
+✅ then explain briefly what the missing value means, and ask in simpler terms.
+
+If the user responds with a question like “Which is better?”, “What would you suggest?”, “Welcher Preis ist gut?”,  
+✅ then offer a reasonable example value (based on common sense or previous answers),  
+✅ and follow it with a kind question like “Would that work for you?”
+
+---
+
+🛑 Never repeat the same sentence twice.  
+🛑 Do not mention JSON or technical terms.  
+✅ Always use one friendly sentence, in the user’s language (usually German).'''
+
+def call_gpt(messages, system_prompt, temperature=0.4, max_tokens=300):
+    headers = {
+        "api-key": api_key,
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "messages": [{"role": "system", "content": system_prompt}] + messages,
+        "temperature": temperature,
+        "max_tokens": max_tokens
+    }
+
+    url = f"{endpoint}openai/deployments/{deployment_name}/chat/completions?api-version={api_version}"
+    response = requests.post(url, headers=headers, json=payload)
+    response.raise_for_status()
+    return response.json()["choices"][0]["message"]["content"]
+
+def extract_missing_fields(prefs):
+    required_fields = ["gearbox", "fueltype", "bodytype", "numberOfDoors", "driveType",
+                       "numberOfSeats", "performance_kw", "cubic_capacity", "price_max",
+                       "mealage_max", "first_registration_year_minimum"]
+    return [field for field in required_fields if prefs.get(field) is None]
+
+
+   
 
 # Streamlit UI
 st.title("💬 Azure GPT Chat")
 
 with st.form(key="chat_form", clear_on_submit=True):
+
+    
     user_input = st.text_input("You:", key="input")
     submitted = st.form_submit_button("Send")
 
+
 if submitted and user_input:
+    st.session_state.chat_history.append({"role": "user", "content": user_input})
 
-     # Append user message to memory
-    st.session_state.messages.append({"role": "user", "content": user_input})
+    user_input_lower = user_input.lower()
+    
 
-
-    if not st.session_state.awaitingFollowUp:
-        response = get_gpt_message(user_input, get_system_prompt("initial"), 0.4, 150)
+    if not st.session_state.awaiting_followup:
+        system_prompt = get_system_prompt("initial")
+        json_text = call_gpt(st.session_state.chat_history, system_prompt)
         try:
-
-            st.session_state.currentPreferences = json.loads(response)
-           # st.session_state.messages.append({"role": "assistant", "content": json.dumps(st.session_state.currentPreferences, indent=2)})
-            null_fields = [key for key, value in st.session_state.currentPreferences.items() if value is None]
-
-        
-            if null_fields:
-               
-               followUpPrompt = build_followup_prompt(st.session_state.currentPreferences, null_fields, user_input , "en")  
-               followUpQuestion = get_gpt_message(followUpPrompt, get_system_prompt("followup",last_user_message=user_input), 0.4, 150); 
-               st.session_state.messages.append({"role": "assistant", "content": followUpQuestion})
-               st.write("not followupwaiting but nll")
-               st.session_state.awaitingFollowUp = True
-
+            prefs = json.loads(json_text)
+            st.session_state.current_preferences = prefs
+            missing = extract_missing_fields(prefs)
+            if missing:
+                followup_prompt = build_follow_up_prompt(prefs, missing, "en", user_input)
+                followup_question = call_gpt(followup_prompt, get_system_prompt("followup", user_input))
+                st.session_state.chat_history.append({"role": "assistant", "content": followup_question})
+                st.session_state.awaiting_followup = True
             else:
-               st.session_state.awaitingFollowUp = False
-               st.session_state.messages.append({"role": "assistant", "content": response})
-               st.write("not followupwaiting but finish")
-        
-               
-            
-            render_chat_history()
+                st.session_state.chat_history.append({"role": "assistant", "content": json.dumps(prefs, indent=2)})
+                st.session_state.awaiting_followup = False
         except json.JSONDecodeError:
-         st.warning("The response is not valid JSON:")
-         st.write(response)
-
-    else:  
-        # If we are awaiting a follow-up, just show the last question
-        followupresponse = get_gpt_message(user_input, get_system_prompt("initial"), 0.4, 300)
-        #st.write(followupresponse)
-
+            st.session_state.chat_history.append({"role": "assistant", "content": "[Fehler: JSON nicht erkannt]"})
+    else:
+        system_prompt = get_system_prompt("initial")
+        json_text = call_gpt(st.session_state.chat_history, system_prompt)
         try:
-
-            followupPrefs = json.loads(followupresponse)
-            #st.write("current Preferences before merge:")
-            #st.write(st.session_state.currentPreferences)
-            merge_preferences(st.session_state.currentPreferences, followupPrefs)
-
-            #st.session_state.messages.append({"role": "assistant", "content": json.dumps(st.session_state.currentPreferences, indent=2)})
-
-           # st.write("Current Preferences after merge:")
-            #st.write(st.session_state.currentPreferences)
-            still_null_fields = [key for key, value in st.session_state.currentPreferences.items() if value is None]
-
-            confused_keywords = ["hilfe", "hilf", "weiß nicht", "keine ahnung", "help"]
-            user_is_confused = any(keyword in user_input.lower() for keyword in confused_keywords)
-
+            prefs_update = json.loads(json_text)
+            st.session_state.current_preferences.update({k: v for k, v in prefs_update.items() if v is not None})
+            missing = extract_missing_fields(st.session_state.current_preferences)
+            user_is_confused = any(phrase in user_input_lower for phrase in ["hilfe", "hilf", "weiß nicht", "keine ahnung", "help"])
+            
             if user_is_confused:
-               
-               help = build_followup_prompt(st.session_state.currentPreferences, still_null_fields, user_input, "en")  
-               helpQuestion = get_gpt_message(help, get_system_prompt("followup",last_user_message=user_input), 0.4, 250); 
-               st.session_state.messages.append({"role": "assistant", "content": helpQuestion})
-               st.write("here open is confused")
-               render_chat_history()   
-               st.stop()
-
-
-            if still_null_fields:
-               
-               folowhelp = build_followup_prompt(st.session_state.currentPreferences, still_null_fields, user_input , "en" )  
-               followqt = get_gpt_message(folowhelp, get_system_prompt("followup",last_user_message=user_input), 0.4, 150); 
-               st.session_state.messages.append({"role": "assistant", "content": followqt})
-                     
-               st.write("here open is still null")
-               render_chat_history()
-
+                followup_prompt = build_follow_up_prompt(st.session_state.current_preferences, missing, "en", user_input)
+                help_question = call_gpt(followup_prompt, get_system_prompt("followup"), temperature=0.4, max_tokens=250)
+                st.session_state.chat_history.append({"role": "assistant", "content": help_question})
+            elif missing:
+                followup_prompt = build_follow_up_prompt(st.session_state.current_preferences, missing, "en", user_input)
+                followup_question = call_gpt(followup_prompt, get_system_prompt("followup"))
+                st.session_state.chat_history.append({"role": "assistant", "content": followup_question})
             else:
-               st.session_state.awaitingFollowUp = False
-               st.write("here open is not null")
-               # st.session_state.messages.append({"role": "assistant", "content": final_message})
-               # render_chat_history()
-               ordered_keys = [
-                   "gearbox",
-                   "fueltype",
-                   "bodytype",
-                   "numberOfDoors",
-                   "driveType",
-                   "numberOfSeats",
-                   "performance_kw",
-                   "cubic_capacity",
-                   "price_max",
-                   "mealage_max",
-                   "first_registration_year_minimum"
-               ]
-               ordered_values = [st.session_state.currentPreferences.get(key) for key in ordered_keys]
-               st.write(ordered_values)
-               query_vector = preprocess_input(
-                     ordered_values[2],  # category
-                     ordered_values[3],  # doors
-                     ordered_values[10],  # first_reg
-                     ordered_values[0],  # gearbox
-                     str(ordered_values[5]),  # seats
-                     ordered_values[1],  # fuel_type
-                     ordered_values[6],  # performance
-                     ordered_values[4],  # drivetype
-                     ordered_values[7]   # cubiccapacity
-                )
-              
-               results, count_results = search_similar_cars_without_filters(
-                        query_vector,
-                        numberofcars,
-                        similarity_threshold=percentagefinal,
-                )
-               if results:
-                 # Filtering the data depends on the choice of the user
-                 st.markdown("<br>", unsafe_allow_html=True)
-                 for car in results:
-            
-                     car_data = car["_source"]       
-                     real_ID = car_data["CarID"]
-                     full_car_info = get_car_by_id(real_ID)
-        
-                     if full_car_info:
-                         st.write(f"🆔 ID: {full_car_info['CarID']}")
-                         st.write(f"🔥 Body Type: {full_car_info.get('BodyType', 'N/A')}")
-                         st.write(f"📏 Make: {full_car_info['Make']}  | 📏 Model: {full_car_info.get('Model', 'N/A')} ")
-                         st.write(f"⚙️ Gearbox: {full_car_info.get('GearBox', 'N/A')} | ⛽ Fuel Type : {full_car_info.get('Fuel', 'N/A')}")
-                         st.write(f"💡 Body Color: {full_car_info.get('BodyColor', 'N/A')} | 🚪 Doors : {full_car_info.get('NumberOfDoors', 'N/A')}")
-                         st.write(f"🚙 Drive Type: {full_car_info.get('DriveType', 'N/A')} | 🚗📏 Mileage : {full_car_info.get('Mileage', 'N/A')}")
-                         st.write(f"🏁 Cubic Capacity: {full_car_info.get('CubicCapacity', 'N/A')} | ⚡ Performance : {full_car_info.get('Power', 'N/A')}")
-                         st.write(f"👥 Number Of Seats: {full_car_info.get('NumberOfSeats', 'N/A')} | 🛠️ Usage State : {full_car_info.get('UsageState', 'N/A')}")
-                         st.write(f"📅 First Registration: {full_car_info.get('FirstRegistration', 'N/A')} | 💰 Price: {full_car_info.get('Price', 'N/A')}")
-                         #st.write(f"📅 Score : {car['_score']}")
-                         st.write("---")
-                     else:
-                      st.write(f"❌ Car with ID {real_ID} not found in DynamoDB.")
-               else:
-                    st.write("❌ No similar cars found.")
-
+                st.session_state.chat_history.append({
+                    "role": "assistant",
+                    "content": "Danke! Hier ist die Zusammenfassung deiner Wünsche:\n" + json.dumps(st.session_state.current_preferences, indent=2)
+                })
+                st.session_state.awaiting_followup = False
         except json.JSONDecodeError:
-         st.warning("The response is not valid JSON:")
-         st.write(followupresponse)           
+            st.session_state.chat_history.append({"role": "assistant", "content": "[Fehler: JSON nicht erkannt]"})
 
-
+# Display chat
+for msg in st.session_state.chat_history:
+    with st.chat_message(msg["role"]):
+        st.markdown(msg["content"])
