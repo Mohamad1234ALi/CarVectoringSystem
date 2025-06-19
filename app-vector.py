@@ -623,6 +623,7 @@ def call_gpt(user_input, system_prompt, temperature=0.4, max_tokens=300):
         messages.append({"role": msg["role"], "content": msg["content"]})
 
     messages.append({"role": "user", "content": user_input})
+    st.session_state.chat_history.append({"role": "user", "content": user_input})
 
     # Prepare the request body
     body = {
@@ -658,7 +659,7 @@ with st.form(key="chat_form", clear_on_submit=True):
 if submitted and user_input:
 
 
-    st.session_state.chat_history.append({"role": "user", "content": user_input})
+    
 
     user_input_lower = user_input.lower()
     
