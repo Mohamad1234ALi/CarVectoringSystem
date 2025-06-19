@@ -618,6 +618,9 @@ def call_gpt(user_input, system_prompt, temperature=0.4, max_tokens=300):
     # Add the system prompt
     messages.append({"role": "system", "content": system_prompt})
     
+    
+    for msg in st.session_state.chat_history:
+        messages.append({"role": msg["role"], "content": msg["content"]})
 
     messages.append({"role": "user", "content": user_input})
    
@@ -687,11 +690,11 @@ if submitted and user_input:
             
             if user_is_confused:
                 followup_prompt = build_follow_up_prompt(st.session_state.current_preferences, missing, "en", user_input)
-                help_question = call_gpt(followup_prompt, get_system_prompt("followup"), temperature=0.4, max_tokens=250)
+                help_question = call_gpt(followup_prompt, get_system_prompt("followup", user_input), temperature=0.4, max_tokens=250)
                 st.session_state.chat_history.append({"role": "assistant", "content": help_question})
             elif missing:
                 followup_prompt = build_follow_up_prompt(st.session_state.current_preferences, missing, "en", user_input)
-                followup_question = call_gpt(followup_prompt, get_system_prompt("followup"))
+                followup_question = call_gpt(followup_prompt, get_system_prompt("followup", user_input))
                 st.session_state.chat_history.append({"role": "assistant", "content": followup_question})
             else:
                 st.session_state.chat_history.append({
