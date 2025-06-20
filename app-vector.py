@@ -715,7 +715,7 @@ if submitted and user_input:
                 st.session_state.chat_history.append({"role": "assistant", "content": followup_question})
             else:
                st.session_state.awaiting_followup = False
-               st.wrrite(st.session_state.current_preferences)
+               st.write(st.session_state.current_preferences)
                ordered_keys = [
                    "gearbox",
                    "fueltype",
