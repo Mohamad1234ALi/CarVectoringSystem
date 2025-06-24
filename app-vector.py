@@ -528,15 +528,13 @@ def get_system_prompt(phase, last_user_message=""):
 You will extract their wishes and return them as a valid JSON object using the format and allowed values below.
 
 
-🎯 Your goal is to fill all fields that can be reasonably inferred. Use the exact terms shown.  
-
-✅ If the user says a value doesn't matter (e.g. “any gearbox”, “egal”, “I don't care”),  
-then set the value to `"any"`.  
+🎯 Your goal is to fill all fields that can be reasonably inferred. Use the exact terms shown. If something is unclear or missing, set it to `null`.
 
 ❗ If the user explicitly says they do NOT want something (e.g. "no limousine", "not electric", "not diesel"),  
 ✅ then set the corresponding value to `null` unless another valid alternative is clearly preferred.
 
-If something is unclear or missing, set it to `null`.
+✅ If the user says they don’t care about a feature (e.g. “egal”, “any”, “macht keinen Unterschied”, “doesn't matter”), then set that field’s value to "any".
+
 
 
 Allowed values and structure:
@@ -603,9 +601,11 @@ Only ask about one missing value at a time. Always start with the most important
 
 🧠 Decision logic:
 
-If the user is clear and confident (e.g. “I prefer automatic”, “max 20.000 km”, “at least 5 seats”, “any gearbox”, “doesn’t matter”):  
-✅ then return a JSON object that adds or updates the missing values.  
-✅ If the user says a value doesn't matter, set the value to `"any"`.
+If the user is clear and confident (e.g. “I prefer automatic”, “max 20.000 km”, “at least 5 seats”)  
+✅ then return a JSON object that adds or updates the missing values. Use only the allowed values.
+
+
+If the user says they don’t care or have no preference about a feature (e.g. “egal”, “any”, “macht keinen Unterschied”, “doesn't matter”), then set only that field to "any" in the JSON. Respond with only the updated JSON.
 
 
 If the user sounds confused or unsure (e.g. says “I don’t know”, “hilf mir”, “keine Ahnung”, “what would you suggest?”)  
