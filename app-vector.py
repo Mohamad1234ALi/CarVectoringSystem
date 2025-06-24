@@ -737,8 +737,7 @@ if submitted and user_input:
             render_chat_history()
             st.stop()
             
-
-        if followup_prefs:
+        elif followup_prefs:
         
             st.session_state.current_preferences.update({k: v for k, v in followup_prefs.items() if v is not None})
             still_missing = extract_missing_fields(st.session_state.current_preferences)
