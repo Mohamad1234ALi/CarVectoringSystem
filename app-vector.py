@@ -533,7 +533,9 @@ You will extract their wishes and return them as a valid JSON object using the f
 ❗ If the user explicitly says they do NOT want something (e.g. "no limousine", "not electric", "not diesel"),  
 ✅ then set the corresponding value to `null` unless another valid alternative is clearly preferred.
 
-✅ If the user says they don’t care about a feature (e.g. “egal”, “any”, “macht keinen Unterschied”, “doesn't matter”), then set that field’s value to "any".
+✅ Only use the value "any" if the user explicitly says they don’t care (e.g. “egal”, “any”, “macht keinen Unterschied”, “doesn't matter”).
+❗ Do NOT use "any" as a default or fallback. If unclear, use `null` instead.
+
 
 
 
