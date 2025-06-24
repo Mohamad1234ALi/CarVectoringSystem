@@ -466,7 +466,7 @@ if st.button("Find Similar Cars") :
 
 
 def render_chat_history():
-    for msg in st.session_state.chat_history:
+    for msg in reversed(st.session_state.chat_history):
         if msg["role"] == "user":
             st.markdown(f"**🧑 You:** {msg['content']}")
         elif msg["role"] == "assistant":
