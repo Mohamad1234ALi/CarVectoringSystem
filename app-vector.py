@@ -334,7 +334,7 @@ percentagefinal = percentage / 100
 col1, col2 = st.columns(2)
 
 with col1:
-   gearbox = st.selectbox("Gearbox", categories_list[CATEGORICAL_FEATURES.index("GearBox")])
+   gearbox = st.selectbox("Gearbox", ["Any"] + categories_list[CATEGORICAL_FEATURES.index("GearBox")])
     
 with col2:
    st.markdown("######")
@@ -343,7 +343,7 @@ with col2:
 col1, col2 = st.columns(2)
 
 with col1:
-    fuel_type = st.selectbox("Fuel Type", categories_list[CATEGORICAL_FEATURES.index("Fuel")])
+    fuel_type = st.selectbox("Fuel Type", ["Any"] + categories_list[CATEGORICAL_FEATURES.index("Fuel")])
     
 with col2:
     st.markdown("######")
@@ -352,7 +352,7 @@ with col2:
 col1, col2 = st.columns(2)
 
 with col1:
-    category = st.selectbox("Body Type", categories_list[CATEGORICAL_FEATURES.index("BodyType")])
+    category = st.selectbox("Body Type", ["Any"] + categories_list[CATEGORICAL_FEATURES.index("BodyType")])
     
 with col2:
     st.markdown("######")
@@ -361,7 +361,7 @@ with col2:
 col1, col2 = st.columns(2)
 
 with col1:
-    doors = st.selectbox("Number Of Doors", categories_list[CATEGORICAL_FEATURES.index("NumberOfDoors")])
+    doors = st.selectbox("Number Of Doors", ["Any"] + categories_list[CATEGORICAL_FEATURES.index("NumberOfDoors")])
     
 with col2:
     st.markdown("######")
@@ -370,7 +370,7 @@ with col2:
 col1, col2 = st.columns(2)
 
 with col1:
-    drivetype = st.selectbox("Drive Type", categories_list[CATEGORICAL_FEATURES.index("DriveType")])
+    drivetype = st.selectbox("Drive Type", ["Any"] + categories_list[CATEGORICAL_FEATURES.index("DriveType")])
     
 with col2:
     st.markdown("######")
@@ -379,7 +379,7 @@ with col2:
 col1, col2 = st.columns(2)
 
 with col1:
-    seats = st.selectbox("Number Of Seats", categories_list[CATEGORICAL_FEATURES.index("NumberOfSeats")])
+    seats = st.selectbox("Number Of Seats", ["Any"] + categories_list[CATEGORICAL_FEATURES.index("NumberOfSeats")])
     
 with col2:
     st.markdown("######")
