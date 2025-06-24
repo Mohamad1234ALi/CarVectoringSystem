@@ -10,6 +10,7 @@ import joblib
 from io import BytesIO
 import boto3
 import random
+import re
 import json
 
 # OpenSearch Configuration
@@ -465,12 +466,11 @@ if st.button("Find Similar Cars") :
 
 
 def render_chat_history():
-    for msg in st.session_state.messages:
+    for msg in st.session_state.chat_history:
         if msg["role"] == "user":
             st.markdown(f"**🧑 You:** {msg['content']}")
         elif msg["role"] == "assistant":
             st.markdown(f"**🤖 Assistant:** {msg['content']}")
-
 
 
 if "chat_history" not in st.session_state:
@@ -482,28 +482,24 @@ if "last_asked_field" not in st.session_state:
     st.session_state.last_asked_field = None    
 
 # Build follow-up prompt dynamically from preferences and missing fields
-def build_follow_up_prompt(prefs, missing_fields, language="en", last_user_message="", focus_field=None):
+def build_follow_up_prompt(prefs, missing_fields, last_user_message=""):
     json_formatted = json.dumps(prefs, indent=2)
-    lang_hint = {
-        "de": "German",
-        "fr": "French",
-        "it": "Italian",
-        "ar": "Arabic"
-    }.get(language, "English")
+   
 
-    focus_info = f"The missing value you should focus on is: {focus_field}.\n\n" if focus_field else ""
-
-    return f'''
+    return f"""
 You are helping a user find a suitable used car.
 
-{focus_info}
 Based on the previous message, we extracted the following preferences:
 
 {json_formatted}
 
-Some values are still missing: {', '.join(missing_fields)}.
+Some values are still missing: {", ".join(missing_fields)}.
 
-The user just wrote: "{last_user_message}".
+The user just wrote: \"{last_user_message}\".
+
+🎯 Your task:
+→ If the user clearly gives one of the missing values, return a new valid JSON object with only that update.
+→ If the user sounds unsure or confused, respond in natural language. Do NOT return JSON in that case.
 
 If they seem unsure or ask for help (e.g. “Ich weiß nicht”, “Hilf mir”, “Hilfe”, “Help me”), do NOT repeat the same question.
 
@@ -520,8 +516,8 @@ Instead:
   - “Do you usually drive alone or with others?”
   - “How old can the car be at most?”
 
-Return only the follow-up question – in {lang_hint}.
-    '''
+Respond in the same language the user used.
+""".strip()
 
 # System prompts
 
@@ -531,8 +527,9 @@ def get_system_prompt(phase, last_user_message=""):
 
 You will extract their wishes and return them as a valid JSON object using the format and allowed values below.
 
-🎯 Your goal is to fill all fields that can be reasonably inferred. Use the exact terms shown. If something is unclear or missing, set it to null.
-
+🎯 Your goal is to fill all fields that can be reasonably inferred. Use the exact terms shown. If something is unclear or missing, set it to `null`.
+❗ If the user explicitly says they do NOT want something (e.g. "no limousine", "not electric", "not diesel"),  
+✅ then set the corresponding value to `null` unless another valid alternative is clearly preferred.
 Allowed values and structure:
 
 {
@@ -556,20 +553,22 @@ Allowed values and structure:
 
 ⚠️ **Important**:
 - Convert: “1.5 Liter” → 1500ccm, “150 PS” → 110kW
-- Accept: “ab 2016” → first_registration_year_minimum = 2017
-- Accept: “bis 120.000 km” → mealage_max = 120000
+- Accept: “ab 2016” → `first_registration_year_minimum = 2017`
+- Accept: “bis 120.000 km” → `mealage_max = 120000`
 
-💬 Return **only** the JSON. No extra explanation or comments. All strings in double quotes.'''
+💬 Return **only** the JSON. No extra explanation or comments. All strings in double quotes.
+ Always respond in the same language the user used in their last message.'''
     else:
         return f'''You are a warm, helpful and intuitive assistant helping a person find a used car that fits their needs.
 
 You already received some preferences in JSON format, but a few values are still missing.
 
-🎯 Your task: Ask ONE friendly, natural follow-up question to clarify one or more of the missing parameters.
-
+🎯 Your task: Based on the user's last message, either:
+→ return a new valid JSON object (if the user provides clear preferences),  
+→ or respond in natural language (if the user seems confused or needs help).
 ❗ Only ask about parameters that exist in the following JSON schema:
 
-{{
+{
   "gearbox": "AUTOMATIC" | "MANUAL" | "SEMI_AUTOMATIC",
   "fueltype": "CNG" | "DIESEL" | "ELECTRICITY" | "ETHANOL" | "HYBRID" | "HYBRID_DIESEL" | "LPG" | "OTHER" | "PETROL",
   "bodytype": "CABRIO" | "ESTATE_CAR" | "LIMOUSINE" | "OFFROAD" | "OTHER_CAR" | "SMALL_CAR" | "SPORTS_CAR" | "VAN",
@@ -581,7 +580,8 @@ You already received some preferences in JSON format, but a few values are still
   "price_max": integer,
   "mealage_max": integer,
   "first_registration_year_minimum": integer
-}}
+}
+Only ask about **one missing value at a time**. Always start with the most important one (e.g. fueltype > performance_kw). This keeps the conversation simple and natural.
 
 ❌ Do not ask about brands, models, colors, readiness, price negotiation, or any features not in the schema.
 
@@ -589,18 +589,21 @@ You already received some preferences in JSON format, but a few values are still
 
 📌 The user’s last message was: "{last_user_message}"
 
-If the user sounds confused or unsure (e.g. says “I don’t know”, “hilf mir”, “keine Ahnung”),  
-✅ then explain briefly what the missing value means, and ask in simpler terms.
+🧠 Decision logic:
 
-If the user responds with a question like “Which is better?”, “What would you suggest?”, “Welcher Preis ist gut?”,  
-✅ then offer a reasonable example value (based on common sense or previous answers),  
-✅ and follow it with a kind question like “Would that work for you?”
+If the user is clear and confident (e.g. “I prefer automatic”, “max 20.000 km”, “at least 5 seats”)  
+✅ then return a JSON object that adds or updates the missing values. Use only the allowed values.
+
+If the user sounds confused or unsure (e.g. says “I don’t know”, “hilf mir”, “keine Ahnung”, “what would you suggest?”)  
+✅ then do NOT return JSON.  
+✅ Instead, explain briefly (1–2 friendly sentences) what the missing value means,  
+✅ and ask a simple follow-up question or suggest a common default.
 
 ---
 
-🛑 Never repeat the same sentence twice.  
-🛑 Do not mention JSON or technical terms.  
-✅ Always use one friendly sentence, in the user’s language (usually German).'''
+🛑 Never mix both formats in one response.  
+🛑 Never mention the word JSON or technical terms.  
+✅ Be warm, simple and speak in the user’s language'''
 
 
 def extract_missing_fields(prefs):
@@ -668,55 +671,94 @@ if submitted and user_input:
 
     if not st.session_state.awaiting_followup:
         system_prompt = get_system_prompt("initial")
-        json_text = call_gpt(user_input, system_prompt)
+        json_text = call_gpt(user_input, system_prompt).strip()
         st.write(f"🤖 Assistant: {json_text}")
+
+        st.session_state.current_preferences = None
+
+
         try:
-            prefs = json.loads(json_text)
-            st.session_state.current_preferences = prefs
-            missing = extract_missing_fields(prefs)
-            if missing:
-                field_to_ask = missing[0]  # Pick the first missing
-                st.session_state.last_asked_field = field_to_ask
-                followup_prompt = build_follow_up_prompt(prefs, missing, "en", user_input, focus_field=field_to_ask)
-                followup_question = call_gpt(followup_prompt, get_system_prompt("followup", user_input))
-                st.session_state.chat_history.append({"role": "assistant", "content": followup_question})
+            if re.match(r"^\s*\{[\s\S]*\}\s*$", json_text):
+                st.session_state.current_preferences = json.loads(json_text)
+            else:
+                st.session_state.chat_history.append({"role": "assistant", "content": "[⚠️ Antwort war kein reines JSON – bitte noch einmal formulieren.]"})
+        except Exception:
+                render_chat_history()
+                st.stop()
+            
+
+        if st.session_state.current_preferences is None:
+            st.session_state.chat_history.append({"role": "assistant", "content": "[ERROR: Unable to parse preferences]"})
+        else:
+            missing_fields = extract_missing_fields(st.session_state.current_preferences)
+
+            if missing_fields:
+                follow_up_prompt = build_follow_up_prompt(
+                    st.session_state.current_preferences,
+                    missing_fields,
+                    user_input
+                )
+                follow_up_question = call_gpt(
+                    follow_up_prompt,
+                    get_system_prompt("followup", user_input),
+                    0.4,
+                    150
+                )
+                st.session_state.chat_history.append({"role": "assistant", "content": follow_up_question})
                 st.session_state.awaiting_followup = True
             else:
-                st.session_state.chat_history.append({"role": "assistant", "content": json.dumps(prefs, indent=2)})
                 st.session_state.awaiting_followup = False
-        except json.JSONDecodeError:
-            st.session_state.chat_history.append({"role": "assistant", "content": "[Fehler: JSON nicht erkannt]"})
+                st.session_state.chat_history.append({"role": "assistant", "content": json_text})  
+
+        render_chat_history()      
+
     else:
         system_prompt = get_system_prompt("initial")
-        json_text = call_gpt(user_input, system_prompt)
+        gpt_response = call_gpt(user_input, system_prompt).strip()
+
+        followup_prefs = None
+        gpt_gave_json = False
+
         try:
-            prefs_update = json.loads(json_text)
-            st.session_state.current_preferences.update({k: v for k, v in prefs_update.items() if v is not None})
-            missing = extract_missing_fields(st.session_state.current_preferences)
-            user_is_confused = any(phrase in user_input_lower for phrase in ["hilfe", "hilf", "weiß nicht", "keine ahnung", "help"])
-            
-            if user_is_confused:
-                st.write("is confused")
-                #followup_prompt = build_follow_up_prompt(st.session_state.current_preferences, missing, "en", user_input)
-                followup_prompt = build_follow_up_prompt(
-                    st.session_state.current_preferences,
-                    missing,
-                    "en",
-                    user_input,
-                    focus_field=st.session_state.last_asked_field
-                )
-                help_question = call_gpt(followup_prompt, get_system_prompt("followup"), temperature=0.4, max_tokens=250)
-                st.session_state.chat_history.append({"role": "assistant", "content": help_question})
-            elif missing:
-                field_to_ask = missing[0]  # Pick the first missing
-                st.session_state.last_asked_field = field_to_ask
-                followup_prompt = build_follow_up_prompt(st.session_state.current_preferences, missing, "en", user_input, focus_field=field_to_ask)
-                followup_question = call_gpt(followup_prompt, get_system_prompt("followup"))
-                st.session_state.chat_history.append({"role": "assistant", "content": followup_question})
+            if re.match(r"^\s*\{[\s\S]*\}\s*$", gpt_response):
+                followup_prefs = json.loads(gpt_response)
+                gpt_gave_json = True
             else:
-               st.session_state.awaiting_followup = False
-               st.write(st.session_state.current_preferences)
-               ordered_keys = [
+                st.session_state.chat_history.append({"role": "assistant", "content": "[⚠️ Antwort war kein reines JSON – bitte noch einmal formulieren.]"})
+        except Exception:
+                render_chat_history()
+                st.stop()
+
+
+        if not gpt_gave_json:
+            st.session_state.chat_history.append({"role": "assistant", "content": gpt_response})
+            render_chat_history()
+            st.stop()
+            
+
+        if followup_prefs:
+        
+            st.session_state.current_preferences.update({k: v for k, v in followup_prefs.items() if v is not None})
+            still_missing = extract_missing_fields(st.session_state.current_preferences)
+
+            if still_missing:
+                follow_up_prompt = build_follow_up_prompt(
+                    st.session_state.current_preferences,
+                    still_missing,
+                    user_input
+                )
+                follow_up_question = call_gpt(
+                    follow_up_prompt,
+                    get_system_prompt("followup"),
+                    0.4,
+                    200
+                )
+                st.session_state.chat_history.append({"role": "assistant", "content": follow_up_question})
+                render_chat_history()
+            else:
+                st.session_state.awaiting_followup = False
+                st.write(st.session_state.current_preferences)
+                ordered_keys = [
                    "gearbox",
                    "fueltype",
                    "bodytype",
@@ -728,10 +770,10 @@ if submitted and user_input:
                    "price_max",
                    "mealage_max",
                    "first_registration_year_minimum"
-               ]
-               ordered_values = [st.session_state.current_preferences.get(key) for key in ordered_keys]
-               st.write(ordered_values)
-               query_vector = preprocess_input(
+                ]
+                ordered_values = [st.session_state.current_preferences.get(key) for key in ordered_keys]
+                st.write(ordered_values)
+                query_vector = preprocess_input(
                      ordered_values[2],  # category
                      ordered_values[3],  # doors
                      ordered_values[10],  # first_reg
@@ -743,12 +785,12 @@ if submitted and user_input:
                      ordered_values[7]   # cubiccapacity
                 )
               
-               results, count_results = search_similar_cars_without_filters(
+                results, count_results = search_similar_cars_without_filters(
                         query_vector,
                         numberofcars,
                         similarity_threshold=percentagefinal,
                 )
-               if results:
+                if results:
                  # Filtering the data depends on the choice of the user
                  st.markdown("<br>", unsafe_allow_html=True)
                  for car in results:
@@ -771,14 +813,8 @@ if submitted and user_input:
                          st.write("---")
                      else:
                       st.write(f"❌ Car with ID {real_ID} not found in DynamoDB.")
-               else:
+                else:
                     st.write("❌ No similar cars found.")
 
-                
-        except json.JSONDecodeError:
-            st.session_state.chat_history.append({"role": "assistant", "content": "[Fehler: JSON nicht erkannt]"})
 
-# Display chat
-for msg in st.session_state.chat_history:
-    with st.chat_message(msg["role"]):
-        st.markdown(msg["content"])
+
