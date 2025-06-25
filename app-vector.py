@@ -537,8 +537,8 @@ You will extract their wishes and return them as a valid JSON object using the f
 ❗ If the user explicitly says they do NOT want something (e.g. "no limousine", "not electric", "not diesel"),  
 ✅ then set the corresponding value to `null` unless another valid alternative is clearly preferred.
 
-✅ Only use the value "any" if the user explicitly says they don’t care (e.g. “egal”, “any”, “macht keinen Unterschied”, “doesn't matter”).
-❗ Do NOT use "any" as a default or fallback. If unclear, use `null` instead.
+✅ Only use the value "Any" if the user explicitly says they don’t care (e.g. “egal”, “Any”, “macht keinen Unterschied”, “doesn't matter”).
+❗ Do NOT use "any" as a default or fallback. If unclear, use `Any` instead.
 
 
 
@@ -611,7 +611,7 @@ If the user is clear and confident (e.g. “I prefer automatic”, “max 20.000
 ✅ then return a JSON object that adds or updates the missing values. Use only the allowed values.
 
 
-If the user says they don’t care or have no preference about a feature (e.g. “egal”, “any”, “macht keinen Unterschied”, “doesn't matter”), then set only that field to "any" in the JSON. Respond with only the updated JSON.
+If the user says they don’t care or have no preference about a feature (e.g. “egal”, “Any”, “macht keinen Unterschied”, “doesn't matter”), then set only that field to "Any" in the JSON. Respond with only the updated JSON.
 
 
 If the user sounds confused or unsure (e.g. says “I don’t know”, “hilf mir”, “keine Ahnung”, “what would you suggest?”)  
