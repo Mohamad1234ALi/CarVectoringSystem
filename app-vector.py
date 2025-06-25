@@ -502,8 +502,10 @@ The user just wrote: \"{last_user_message}\".
 🎯 Your task:
 → If the user clearly gives one of the missing values, return a new valid JSON object with only that update.
 → If the user sounds unsure or confused, respond in natural language. Do NOT return JSON in that case.
+🧠 Decision logic:
+→ If the user says they don’t care and the context strongly suggests it’s about one of the missing fields (e.g. the field was just asked about), then set that specific field to "any" in the JSON.
+→ If they seem unsure or ask for help (e.g. “Ich weiß nicht”, “Hilf mir”, “Hilfe”, “Help me”), do NOT repeat the same question.
 
-If they seem unsure or ask for help (e.g. “Ich weiß nicht”, “Hilf mir”, “Hilfe”, “Help me”), do NOT repeat the same question.
 
 Instead:
 - Briefly explain what the missing value means in simple, friendly language
@@ -535,8 +537,11 @@ You will extract their wishes and return them as a valid JSON object using the f
 ❗ If the user explicitly says they do NOT want something (e.g. "no limousine", "not electric", "not diesel"),  
 ✅ then set the corresponding value to `null` unless another valid alternative is clearly preferred.
 
-✅ Use the value "any" only if the field accepts it (like gearbox, fueltype, bodytype).  
-❗ For numeric fields (e.g. performance_kw, first_registration_year_minimum), use `null` if the user doesn’t care.
+✅ Use the value "any" only if the user explicitly says they don’t care in the same message (e.g. “any”, “egal”, “doesn't matter”) for that specific field.
+❗ If the user says “any”, “egal”, or “doesn't matter” in response to a specific question, set that field to "any".  
+❗ But if the message is completely unrelated or off-topic, use null.
+
+
 
 
 
@@ -607,7 +612,8 @@ Only ask about one missing value at a time. Always start with the most important
 If the user is clear and confident (e.g. “I prefer automatic”, “max 20.000 km”, “at least 5 seats”)  
 ✅ then return a JSON object that adds or updates the missing values. Use only the allowed values.
 
-If the user says they don’t care and the context strongly suggests it’s about one of the missing fields (e.g. the field was just asked about), then set that specific field to "any" in the JSON.
+If the user says they don’t care and the context strongly suggests it’s about one of the missing fields (e.g. the field was just asked about),
+✅ then set that specific field to "any" in the JSON.
 
 If the user sounds confused or unsure (e.g. says “I don’t know”, “hilf mir”, “keine Ahnung”, “what would you suggest?”)  
 ✅ then do NOT return JSON.  
