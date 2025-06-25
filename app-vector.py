@@ -610,9 +610,7 @@ Only ask about one missing value at a time. Always start with the most important
 If the user is clear and confident (e.g. “I prefer automatic”, “max 20.000 km”, “at least 5 seats”)  
 ✅ then return a JSON object that adds or updates the missing values. Use only the allowed values.
 
-
-If the user says they don’t care or have no preference about a feature (e.g. “egal”, “any”, “macht keinen Unterschied”, “doesn't matter”), then set only that field to "any" in the JSON. Respond with only the updated JSON.
-
+If the user says they don’t care and the context strongly suggests it’s about one of the missing fields (e.g. the field was just asked about), then set that specific field to "any" in the JSON.
 
 If the user sounds confused or unsure (e.g. says “I don’t know”, “hilf mir”, “keine Ahnung”, “what would you suggest?”)  
 ✅ then do NOT return JSON.  
@@ -628,12 +626,8 @@ def extract_missing_fields(prefs):
     required_fields = ["gearbox", "fueltype", "bodytype", "numberOfDoors", "driveType",
                        "numberOfSeats", "performance_kw", "cubic_capacity", "price_max",
                        "mealage_max", "first_registration_year_minimum"]
+    return [field for field in required_fields if prefs.get(field) is None]
 
-    # Consider both null and missing, but allow "any"
-    return [
-        field for field in required_fields
-        if prefs.get(field) is None or str(prefs.get(field)).lower() == "null"
-    ]
 
 def call_gpt(user_input, system_prompt, temperature=0.4, max_tokens=300):
 
