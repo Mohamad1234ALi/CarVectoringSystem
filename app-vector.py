@@ -502,7 +502,6 @@ The user just wrote: \"{last_user_message}\".
 🎯 Your task:
 → If the user clearly gives one of the missing values, return a new valid JSON object with only that update.
 → If the user sounds unsure or confused, respond in natural language. Do NOT return JSON in that case.
-→ If the user clearly says they don’t care (e.g. “any”, “doesn't matter”), set the asked feature to "any".
 
 If they seem unsure or ask for help (e.g. “Ich weiß nicht”, “Hilf mir”, “Hilfe”, “Help me”), do NOT repeat the same question.
 
@@ -536,11 +535,8 @@ You will extract their wishes and return them as a valid JSON object using the f
 ❗ If the user explicitly says they do NOT want something (e.g. "no limousine", "not electric", "not diesel"),  
 ✅ then set the corresponding value to `null` unless another valid alternative is clearly preferred.
 
-✅ Use the value "any" only if the user explicitly says they don’t care in the same message (e.g. “any”, “egal”, “doesn't matter”) for that specific field.
-❗ If the user says “any”, “egal”, or “doesn't matter” in response to a specific question, set that field to "any".  
-❗ But if the message is completely unrelated or off-topic, use null.
-
-
+✅ Use the value "any" only if the field accepts it (like gearbox, fueltype, bodytype).  
+❗ For numeric fields (e.g. performance_kw, first_registration_year_minimum), use `null` if the user doesn’t care.
 
 
 
