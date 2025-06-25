@@ -538,7 +538,7 @@ You will extract their wishes and return them as a valid JSON object using the f
 ✅ then set the corresponding value to `null` unless another valid alternative is clearly preferred.
 
 ✅ Only use the value "Any" if the user explicitly says they don’t care (e.g. “egal”, “Any”, “macht keinen Unterschied”, “doesn't matter”).
-❗ Do NOT use "any" as a default or fallback. If unclear, use `Any` instead.
+❗ Do NOT use "any" as a default or fallback. If unclear, use `null` instead.
 
 
 
