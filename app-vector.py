@@ -107,21 +107,27 @@ onehot_encoder.fit(dummy_input)
 
 # Function to convert user input into vector
 def preprocess_input(category, doors, first_reg, gearbox, seats, fuel_type, performance, drivetype, cubiccapacity):
-    # Prepare DataFrame for categorical input (must match training order)
-    cat_input = pd.DataFrame([{
-        "BodyType": category,
-        "Fuel": fuel_type,
-        "NumberOfDoors": doors,
-        "GearBox": gearbox,
-        "DriveType": drivetype,  # or any default, if not part of Streamlit inputs
-        "NumberOfSeats": seats
-    }])
+  
+    cat_data = {
+    "BodyType": None if category == "Any" else category,
+    "Fuel": None if fuel_type == "Any" else fuel_type,
+    "NumberOfDoors": None if doors == "Any" else doors,
+    "GearBox": None if gearbox == "Any" else gearbox,
+    "DriveType": None if drivetype == "Any" else drivetype,
+    "NumberOfSeats": None if seats == "Any" else seats
+    }
 
-    # OneHotEncode categorical values
-    cat_encoded = onehot_encoder.transform(cat_input)
+    # OneHotEncoder should be fitted with handle_unknown='ignore'
+    cat_df = pd.DataFrame([cat_data])
+    cat_encoded = onehot_encoder.transform(cat_df)
 
    # Apply log1p to numerical features
-    numerical_input = [first_reg, performance, cubiccapacity]
+    
+    numerical_input = [
+        0 if first_reg in ["Any", None] else first_reg,
+        0 if performance in ["Any", None] else performance,
+        0 if cubiccapacity in ["Any", None] else cubiccapacity
+    ]
     log_transformed = np.log1p(numerical_input).reshape(1, -1)
 
     # Apply scaler
@@ -167,24 +173,23 @@ def search_similar_cars_with_filters(
             mileage_range["lte"] = mileage_max
         filters.append({"range": {"Mileage": mileage_range}})
 
-    if gearbox_needed :  # checkbox True and value provided
+    if gearbox_needed and gearbox_value != "Any":
         filters.append({"term": {"GearBox": gearbox_value}})
-    # Fuel type filter
-    if fuel_needed :  # checkbox True and value provided
+
+    if fuel_needed and fuel_value != "Any":
         filters.append({"term": {"Fuel": fuel_value}})
 
-    if category_needed :  # checkbox True and value provided
+    if category_needed and category_value != "Any":
         filters.append({"term": {"BodyType": category_value}})
 
-    if doors_needed :  # checkbox True and value provided
+    if doors_needed and doors_value != "Any":
         filters.append({"term": {"NumberOfDoors": doors_value}})
 
-    if drive_needed :  # checkbox True and value provided
+    if drive_needed and drive_value != "Any":
         filters.append({"term": {"DriveType": drive_value}})
 
-    if seats_needed :  # checkbox True and value provided
+    if seats_needed and seats_value != "Any":
         filters.append({"term": {"NumberOfSeats": seats_value}})
-
 
     # Construct the query with bool filter and knn must
     query = {
@@ -280,23 +285,22 @@ def search_count_Filter(
             mileage_range["lte"] = mileage_max
         filters.append({"range": {"Mileage": mileage_range}})
 
-    if gearbox_needed :  # checkbox True and value provided
+    if gearbox_needed and gearbox_value != "Any":
         filters.append({"term": {"GearBox": gearbox_value}})
 
-    # Fuel type filter
-    if fuel_needed :  # checkbox True and value provided
+    if fuel_needed and fuel_value != "Any":
         filters.append({"term": {"Fuel": fuel_value}})
 
-    if category_needed :  # checkbox True and value provided
+    if category_needed and category_value != "Any":
         filters.append({"term": {"BodyType": category_value}})
 
-    if doors_needed :  # checkbox True and value provided
+    if doors_needed and doors_value != "Any":
         filters.append({"term": {"NumberOfDoors": doors_value}})
 
-    if drive_needed :  # checkbox True and value provided
+    if drive_needed and drive_value != "Any":
         filters.append({"term": {"DriveType": drive_value}})
 
-    if seats_needed :  # checkbox True and value provided
+    if seats_needed and seats_value != "Any":
         filters.append({"term": {"NumberOfSeats": seats_value}})
 
     # 🔢 Count how many cars match the filters only (before KNN)
