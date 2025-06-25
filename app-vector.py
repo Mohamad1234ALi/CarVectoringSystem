@@ -482,33 +482,45 @@ if "chat_history" not in st.session_state:
     st.session_state.awaiting_followup = False
     st.session_state.current_preferences = {}
     
-if "last_asked_field" not in st.session_state:
-    st.session_state.last_asked_field = None  
 
-
+# Build follow-up prompt dynamically from preferences and missing fields
 def build_follow_up_prompt(prefs, missing_fields, last_user_message=""):
-    current_field = missing_fields[0]  # Always only one
+    json_formatted = json.dumps(prefs, indent=2)
+   
 
     return f"""
 You are helping a user find a suitable used car.
 
 Based on the previous message, we extracted the following preferences:
 
-{json.dumps(prefs, indent=2)}
+{json_formatted}
 
-The user’s last message was: "{last_user_message}"
+Some values are still missing: {", ".join(missing_fields)}.
+
+The user just wrote: \"{last_user_message}\".
 
 🎯 Your task:
-→ Ask only about this field: **{current_field}**
-→ If the user clearly says they don’t care (e.g. “any”, “doesn't matter”), return a JSON with `{current_field}` = "any"
-→ If they provide a real value, return JSON with that update
-→ If the user sounds unsure or confused, respond in natural language  and ask for help on this field again. Do NOT return JSON in that case.
+→ If the user clearly gives one of the missing values, return a new valid JSON object with only that update.
+→ If the user sounds unsure or confused, respond in natural language. Do NOT return JSON in that case.
+→ If the user clearly says they don’t care (e.g. “any”, “doesn't matter”),return a new valid JSON object with only that update the current feature = "any".
 
-🛑 Never ask about multiple values. Just focus on one.
-🛑 Never mix JSON and explanation.
-✅ Always respond in the same language the user used.
+If they seem unsure or ask for help (e.g. “Ich weiß nicht”, “Hilf mir”, “Hilfe”, “Help me”), do NOT repeat the same question.
+
+Instead:
+- Briefly explain what the missing value means in simple, friendly language
+- Then ask the question again in an easier and more helpful way
+
+🛑 Avoid:
+- technical field names like 'gearbox', 'performance_kw'
+- car terms like 'cubic capacity', 'numberOfDoors'
+
+✅ Instead:
+- Use everyday language like:
+  - “Do you usually drive alone or with others?”
+  - “How old can the car be at most?”
+
+Respond in the same language the user used.
 """.strip()
-
 
 # System prompts
 
@@ -699,11 +711,9 @@ if submitted and user_input:
             missing_fields = extract_missing_fields(st.session_state.current_preferences)
 
             if missing_fields:
-                current_field = missing_fields[0]  # focus on just one field
-                st.session_state.last_asked_field = current_field
                 follow_up_prompt = build_follow_up_prompt(
                     st.session_state.current_preferences,
-                    [current_field],  # only ask for one field!
+                    missing_fields,
                     user_input
                 )
                 follow_up_question = call_gpt(
@@ -749,11 +759,9 @@ if submitted and user_input:
             still_missing = extract_missing_fields(st.session_state.current_preferences)
 
             if still_missing:
-                current_field = still_missing[0]  # focus on just one field
-                st.session_state.last_asked_field = current_field
                 follow_up_prompt = build_follow_up_prompt(
                     st.session_state.current_preferences,
-                    [current_field],  # only ask for one field!
+                    still_missing,
                     user_input
                 )
                 follow_up_question = call_gpt(
