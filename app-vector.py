@@ -502,7 +502,7 @@ The user just wrote: \"{last_user_message}\".
 🎯 Your task:
 → If the user clearly gives one of the missing values, return a new valid JSON object with only that update.
 → If the user sounds unsure or confused, respond in natural language. Do NOT return JSON in that case.
-→ If the user clearly says they don’t care (e.g. “any”, “doesn't matter”),return a new valid JSON object with only that update the current feature = "any".
+→ If the user clearly says they don’t care (e.g. “any”, “doesn't matter”), set the asked feature to "any".
 
 If they seem unsure or ask for help (e.g. “Ich weiß nicht”, “Hilf mir”, “Hilfe”, “Help me”), do NOT repeat the same question.
 
