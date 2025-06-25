@@ -537,8 +537,8 @@ You will extract their wishes and return them as a valid JSON object using the f
 ❗ If the user explicitly says they do NOT want something (e.g. "no limousine", "not electric", "not diesel"),  
 ✅ then set the corresponding value to `null` unless another valid alternative is clearly preferred.
 
-✅ Only use the value "Any" if the user explicitly says they don’t care (e.g. “egal”, “Any”, “macht keinen Unterschied”, “doesn't matter”).
-❗ Do NOT use "any" as a default or fallback. If unclear, use `null` instead.
+✅ Use the value "any" only if the user explicitly says they don’t care in the same message (e.g. “any”, “egal”, “doesn't matter”) for that specific field.
+❗ If the user's message is general or unrelated, leave the value as null.
 
 
 
@@ -611,7 +611,7 @@ If the user is clear and confident (e.g. “I prefer automatic”, “max 20.000
 ✅ then return a JSON object that adds or updates the missing values. Use only the allowed values.
 
 
-If the user says they don’t care or have no preference about a feature (e.g. “egal”, “Any”, “macht keinen Unterschied”, “doesn't matter”), then set only that field to "Any" in the JSON. Respond with only the updated JSON.
+If the user says they don’t care or have no preference about a feature (e.g. “egal”, “any”, “macht keinen Unterschied”, “doesn't matter”), then set only that field to "any" in the JSON. Respond with only the updated JSON.
 
 
 If the user sounds confused or unsure (e.g. says “I don’t know”, “hilf mir”, “keine Ahnung”, “what would you suggest?”)  
@@ -628,8 +628,12 @@ def extract_missing_fields(prefs):
     required_fields = ["gearbox", "fueltype", "bodytype", "numberOfDoors", "driveType",
                        "numberOfSeats", "performance_kw", "cubic_capacity", "price_max",
                        "mealage_max", "first_registration_year_minimum"]
-    return [field for field in required_fields if prefs.get(field) is None]
 
+    # Consider both null and missing, but allow "any"
+    return [
+        field for field in required_fields
+        if prefs.get(field) is None or str(prefs.get(field)).lower() == "null"
+    ]
 
 def call_gpt(user_input, system_prompt, temperature=0.4, max_tokens=300):
 
