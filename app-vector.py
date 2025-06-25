@@ -482,8 +482,6 @@ if "chat_history" not in st.session_state:
     st.session_state.awaiting_followup = False
     st.session_state.current_preferences = {}
     
-if "last_asked_field" not in st.session_state:
-    st.session_state.last_asked_field = None    
 
 # Build follow-up prompt dynamically from preferences and missing fields
 def build_follow_up_prompt(prefs, missing_fields, last_user_message=""):
@@ -538,7 +536,9 @@ You will extract their wishes and return them as a valid JSON object using the f
 ✅ then set the corresponding value to `null` unless another valid alternative is clearly preferred.
 
 ✅ Use the value "any" only if the user explicitly says they don’t care in the same message (e.g. “any”, “egal”, “doesn't matter”) for that specific field.
-❗ If the user's message is general or unrelated, leave the value as null.
+❗ If the user says “any”, “egal”, or “doesn't matter” in response to a specific question, set that field to "any".  
+❗ But if the message is completely unrelated or off-topic, use null.
+
 
 
 
@@ -627,6 +627,7 @@ def extract_missing_fields(prefs):
                        "numberOfSeats", "performance_kw", "cubic_capacity", "price_max",
                        "mealage_max", "first_registration_year_minimum"]
     return [field for field in required_fields if prefs.get(field) is None]
+
 
 
 def call_gpt(user_input, system_prompt, temperature=0.4, max_tokens=300):
