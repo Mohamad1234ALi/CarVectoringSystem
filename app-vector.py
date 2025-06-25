@@ -502,7 +502,7 @@ The user’s last message was: "{last_user_message}"
 → Ask only about this field: **{current_field}**
 → If the user clearly says they don’t care (e.g. “any”, “doesn't matter”), return a JSON with `{current_field}` = "any"
 → If they provide a real value, return JSON with that update
-→ If they sound unsure or confused, respond in friendly natural language and ask for help on this field again.
+→ If the user sounds unsure or confused, respond in natural language  and ask for help on this field again. Do NOT return JSON in that case.
 
 🛑 Never ask about multiple values. Just focus on one.
 🛑 Never mix JSON and explanation.
