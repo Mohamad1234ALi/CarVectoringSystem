@@ -503,9 +503,13 @@ The user just wrote: \"{last_user_message}\".
 
 🎯 Your task:
 → If the user clearly gives one of the missing values, return a new valid JSON object with only that update.
+
+→ If the user replies with “any”, “I don’t care”, “egal”, or similar neutral words, return that feature with the string value "any" — but only for categorical fields (like fuel type or gearbox). Do not use "any" for numeric fields like price or mileage.
+
 → If the user sounds unsure or confused, respond in natural language. Do NOT return JSON in that case.
 
 If they seem unsure or ask for help (e.g. “Ich weiß nicht”, “Hilf mir”, “Hilfe”, “Help me”), do NOT repeat the same question.
+
 
 Instead:
 - Briefly explain what the missing value means in simple, friendly language
