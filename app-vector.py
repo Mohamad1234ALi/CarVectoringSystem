@@ -817,8 +817,13 @@ if submitted and user_input:
             st.stop()  # prevent GPT call if user input was neutral
 
         # If user didn't say "any" or similar, call GPT
-        system_prompt = get_system_prompt("initial")
-        gpt_response = call_gpt(user_input, system_prompt).strip()
+        follow_up_prompt = build_follow_up_prompt(
+             st.session_state.current_preferences,
+             extract_missing_fields(st.session_state.current_preferences),
+             user_input
+        )
+        system_prompt = get_system_prompt("followup", user_input)
+        gpt_response = call_gpt(follow_up_prompt, system_prompt).strip()
 
         followup_prefs = None
         gpt_gave_json = False
