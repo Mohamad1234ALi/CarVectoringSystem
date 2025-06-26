@@ -833,7 +833,10 @@ if submitted and user_input:
                 followup_prefs = json.loads(gpt_response)
                 gpt_gave_json = True
             else:
-                st.session_state.chat_history.append({"role": "assistant", "content": "[⚠️ Antwort war kein reines JSON – bitte noch einmal formulieren.]"})
+                # 🧠 Accept non-JSON as helpful explanation
+                 st.session_state.chat_history.append({"role": "assistant", "content": gpt_response})
+                 render_chat_history()
+                 st.stop()
         except Exception:
             render_chat_history()
             st.stop()
