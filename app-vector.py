@@ -626,17 +626,28 @@ def extract_missing_fields(prefs):
     return [field for field in required_fields if prefs.get(field) is None]
 
 def handle_neutral_input(user_input, current_missing_field):
-    neutral_responses = [
+    neutral_phrases = [
         "any", "i don't care", "doesn't matter", "no preference", 
         "egal", "kein unterschied", "mir egal", 
         "je me fiche", "ça m'est égal", 
         "لا يهم", "أي", "مش فارقة"
     ]
+
     user_input_lower = user_input.lower().strip()
-    if any(phrase in user_input_lower for phrase in neutral_responses):
+
+    # Check for global "I don't care" style sentences
+    global_indicators = [
+        "rest doesn't matter", "the rest doesn't matter", "i only care about", "other features don't matter"
+    ]
+    if any(indicator in user_input_lower for indicator in global_indicators):
+        return "ALL_CATEGORICAL", "any"
+
+    # Single-field neutral input
+    if any(phrase in user_input_lower for phrase in neutral_phrases):
         categorical_fields = ["gearbox", "fueltype", "bodytype", "numberOfDoors", "driveType"]
         if current_missing_field in categorical_fields:
             return current_missing_field, "any"
+
     return None, None
 
 
@@ -746,8 +757,17 @@ if submitted and user_input:
         field_to_update, value_to_set = handle_neutral_input(user_input, st.session_state.get("last_missing_field"))
 
         if field_to_update:
-            st.session_state.current_preferences[field_to_update] = value_to_set
+
+            if field_to_update == "ALL_CATEGORICAL":
+                categorical_fields = ["gearbox", "fueltype", "bodytype", "numberOfDoors", "driveType"]
+                for field in extract_missing_fields(st.session_state.current_preferences):
+                    if field in categorical_fields:
+                        st.session_state.current_preferences[field] = "any"
+            else:
+                st.session_state.current_preferences[field_to_update] = value_to_set
+
             still_missing = extract_missing_fields(st.session_state.current_preferences)
+
             if field_to_update in still_missing:
                 still_missing.remove(field_to_update)
 
