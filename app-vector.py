@@ -479,29 +479,51 @@ CATEGORICAL_FIELDS = {
 
 def handle_any_statements(json_text, user_message, current_prefs=None):
     """
-    Sets appropriate categorical fields to 'any' based on user's message.
-    - If the user says "I don't care about the rest", set all missing categorical fields to 'any'.
-    - If the user says "any" to a specific field question, set only that field to 'any'.
+    Updates parsed JSON response to handle 'any' logic for categorical fields.
+
+    - If the user says something like "I don't care about the others" → sets all missing categorical fields to "any".
+    - If the user says "any", "egal", or similar → sets missing categorical field(s) to "any".
+    - Applies fallback when only one categorical field is missing and user says "any".
     """
+
+    CATEGORICAL_FIELDS = {
+        "gearbox",
+        "fueltype",
+        "bodytype",
+        "numberOfDoors",
+        "driveType"
+    }
+
     try:
         parsed = json.loads(json_text)
     except Exception:
-        return None  # fallback if not JSON
+        return None  # If it's not valid JSON, exit
 
-    user_msg_lower = user_message.lower()
+    user_msg_lower = user_message.strip().lower()
+    any_phrases = ["any", "egal", "whatever", "doesn't matter", "don't care", "no preference", "kein unterschied", "macht nichts", "egal ist mir"]
 
-    # Global "any" intent: applies to all categorical fields
-    if any(phrase in user_msg_lower for phrase in ["i don't care about the others", "i don't care about the rest", "egal", "any is fine", "whatever"]):
+    # Global 'any': apply to all missing categorical fields
+    if any(phrase in user_msg_lower for phrase in ["i don't care about the others", "i don't care about the rest", "mir egal was der rest ist", "alles andere ist mir egal"]):
         for field in CATEGORICAL_FIELDS:
-            if current_prefs is None or current_prefs.get(field) is None:
+            if (current_prefs is None or current_prefs.get(field) is None) and parsed.get(field) is None:
                 parsed[field] = "any"
-    
-    # Field-specific "any"
+
+    # Field-specific 'any' detection (if user refers to a field directly)
     for field in CATEGORICAL_FIELDS:
         if field in user_msg_lower or field.lower().replace("_", " ") in user_msg_lower:
-            if any(phrase in user_msg_lower for phrase in ["any", "egal", "doesn't matter", "don't care", "kein unterschied"]):
+            if any(phrase in user_msg_lower for phrase in any_phrases):
                 parsed[field] = "any"
-    
+
+    # Fallback: if user says only "any" and exactly one categorical field is missing
+    if any(user_msg_lower.strip() == phrase for phrase in any_phrases):
+        if current_prefs:
+            missing = [
+                field for field in CATEGORICAL_FIELDS
+                if current_prefs.get(field) is None and parsed.get(field) is None
+            ]
+            if len(missing) == 1:
+                parsed[missing[0]] = "any"
+
     return parsed
 
 
@@ -637,6 +659,9 @@ Only ask about one missing value at a time. Always start with the most important
 
 If the user is clear and confident (e.g. “I prefer automatic”, “max 20.000 km”, “at least 5 seats”)  
 ✅ then return a JSON object that adds or updates the missing values. Use only the allowed values.
+
+If the user says “any”, “egal”, “whatever”, or “doesn’t matter” →  
+✅ For categorical fields, return "any" as the value.
 
 
 If the user sounds confused or unsure (e.g. says “I don’t know”, “hilf mir”, “keine Ahnung”, “what would you suggest?”)  
