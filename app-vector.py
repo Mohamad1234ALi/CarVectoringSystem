@@ -469,6 +469,42 @@ if st.button("Find Similar Cars") :
         st.write("❌ No similar cars found.")
 
 
+CATEGORICAL_FIELDS = {
+    "gearbox",
+    "fueltype",
+    "bodytype",
+    "numberOfDoors",
+    "driveType"
+}
+
+def handle_any_statements(json_text, user_message, current_prefs=None):
+    """
+    Sets appropriate categorical fields to 'any' based on user's message.
+    - If the user says "I don't care about the rest", set all missing categorical fields to 'any'.
+    - If the user says "any" to a specific field question, set only that field to 'any'.
+    """
+    try:
+        parsed = json.loads(json_text)
+    except Exception:
+        return None  # fallback if not JSON
+
+    user_msg_lower = user_message.lower()
+
+    # Global "any" intent: applies to all categorical fields
+    if any(phrase in user_msg_lower for phrase in ["i don't care about the others", "i don't care about the rest", "egal", "any is fine", "whatever"]):
+        for field in CATEGORICAL_FIELDS:
+            if current_prefs is None or current_prefs.get(field) is None:
+                parsed[field] = "any"
+    
+    # Field-specific "any"
+    for field in CATEGORICAL_FIELDS:
+        if field in user_msg_lower or field.lower().replace("_", " ") in user_msg_lower:
+            if any(phrase in user_msg_lower for phrase in ["any", "egal", "doesn't matter", "don't care", "kein unterschied"]):
+                parsed[field] = "any"
+    
+    return parsed
+
+
 def render_chat_history():
     for msg in reversed(st.session_state.chat_history):
         if msg["role"] == "user":
@@ -687,7 +723,11 @@ if submitted and user_input:
 
         try:
             if re.match(r"^\s*\{[\s\S]*\}\s*$", json_text):
-                st.session_state.current_preferences = json.loads(json_text)
+               parsed = handle_any_statements(json_text, user_input)
+               if parsed:
+                    st.session_state.current_preferences = parsed
+               else:
+                    st.session_state.current_preferences = None
             else:
                 st.session_state.chat_history.append({"role": "assistant", "content": "[⚠️ Antwort war kein reines JSON – bitte noch einmal formulieren.]"})
         except Exception:
@@ -729,8 +769,10 @@ if submitted and user_input:
 
         try:
             if re.match(r"^\s*\{[\s\S]*\}\s*$", gpt_response):
-                followup_prefs = json.loads(gpt_response)
-                gpt_gave_json = True
+                parsed = handle_any_statements(gpt_response, user_input, st.session_state.current_preferences)
+                if parsed:
+                    followup_prefs = parsed
+                    gpt_gave_json = True
             else:
                 st.session_state.chat_history.append({"role": "assistant", "content": "[⚠️ Antwort war kein reines JSON – bitte noch einmal formulieren.]"})
         except Exception:
