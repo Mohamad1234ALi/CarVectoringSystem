@@ -481,9 +481,7 @@ if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
     st.session_state.awaiting_followup = False
     st.session_state.current_preferences = {}
-
-if "last_missing_field" not in st.session_state:
-    st.session_state.last_missing_field = None
+    
 
 # Build follow-up prompt dynamically from preferences and missing fields
 def build_follow_up_prompt(prefs, missing_fields, last_user_message=""):
@@ -503,13 +501,9 @@ The user just wrote: \"{last_user_message}\".
 
 🎯 Your task:
 → If the user clearly gives one of the missing values, return a new valid JSON object with only that update.
-
-→ If the user replies with “any”, “I don’t care”, “egal”, or similar neutral words, return that feature with the string value "any" — but only for categorical fields (like fuel type or gearbox). Do not use "any" for numeric fields like price or mileage.
-
 → If the user sounds unsure or confused, respond in natural language. Do NOT return JSON in that case.
 
 If they seem unsure or ask for help (e.g. “Ich weiß nicht”, “Hilf mir”, “Hilfe”, “Help me”), do NOT repeat the same question.
-
 
 Instead:
 - Briefly explain what the missing value means in simple, friendly language
@@ -540,7 +534,6 @@ You will extract their wishes and return them as a valid JSON object using the f
 
 ❗ If the user explicitly says they do NOT want something (e.g. "no limousine", "not electric", "not diesel"),  
 ✅ then set the corresponding value to `null` unless another valid alternative is clearly preferred.
-
 
 Allowed values and structure:
 
@@ -609,6 +602,7 @@ Only ask about one missing value at a time. Always start with the most important
 If the user is clear and confident (e.g. “I prefer automatic”, “max 20.000 km”, “at least 5 seats”)  
 ✅ then return a JSON object that adds or updates the missing values. Use only the allowed values.
 
+
 If the user sounds confused or unsure (e.g. says “I don’t know”, “hilf mir”, “keine Ahnung”, “what would you suggest?”)  
 ✅ then do NOT return JSON.  
 ✅ Instead, explain briefly (1–2 friendly sentences) what the missing value means,  
@@ -625,30 +619,6 @@ def extract_missing_fields(prefs):
                        "mealage_max", "first_registration_year_minimum"]
     return [field for field in required_fields if prefs.get(field) is None]
 
-def handle_neutral_input(user_input, current_missing_field):
-    neutral_phrases = [
-        "any", "i don't care", "doesn't matter", "no preference", 
-        "egal", "kein unterschied", "mir egal", 
-        "je me fiche", "ça m'est égal", 
-        "لا يهم", "أي", "مش فارقة"
-    ]
-
-    user_input_lower = user_input.lower().strip()
-
-    # Check for global "I don't care" style sentences
-    global_indicators = [
-        "rest doesn't matter", "the rest doesn't matter", "i only care about", "other features don't matter"
-    ]
-    if any(indicator in user_input_lower for indicator in global_indicators):
-        return "ALL_CATEGORICAL", "any"
-
-    # Single-field neutral input
-    if any(phrase in user_input_lower for phrase in neutral_phrases):
-        categorical_fields = ["gearbox", "fueltype", "bodytype", "numberOfDoors", "driveType"]
-        if current_missing_field in categorical_fields:
-            return current_missing_field, "any"
-
-    return None, None
 
 
 def call_gpt(user_input, system_prompt, temperature=0.4, max_tokens=300):
@@ -736,7 +706,6 @@ if submitted and user_input:
                     missing_fields,
                     user_input
                 )
-                st.session_state.last_missing_field = missing_fields[0]
                 follow_up_question = call_gpt(
                     follow_up_prompt,
                     get_system_prompt("followup", user_input),
@@ -752,105 +721,8 @@ if submitted and user_input:
         render_chat_history()      
 
     else:
-
-        # Follow-up phase: check for neutral answers
-        field_to_update, value_to_set = handle_neutral_input(user_input, st.session_state.get("last_missing_field"))
-
-        if field_to_update:
-
-            if field_to_update == "ALL_CATEGORICAL":
-                categorical_fields = ["gearbox", "fueltype", "bodytype", "numberOfDoors", "driveType"]
-                for field in extract_missing_fields(st.session_state.current_preferences):
-                    if field in categorical_fields:
-                        st.session_state.current_preferences[field] = "any"
-            else:
-                st.session_state.current_preferences[field_to_update] = value_to_set
-
-            still_missing = extract_missing_fields(st.session_state.current_preferences)
-
-            if still_missing:
-
-                st.session_state.last_missing_field = still_missing[0]
-
-                follow_up_prompt = build_follow_up_prompt(
-                    st.session_state.current_preferences,
-                    still_missing,
-                    user_input
-                )
-
-                follow_up_question = call_gpt(
-                    follow_up_prompt,
-                    get_system_prompt("followup", user_input),
-                    0.4,
-                    200
-                )
-
-                st.session_state.chat_history.append({"role": "assistant", "content": follow_up_question})
-                render_chat_history()
-                st.stop()
-
-            else:
-                st.session_state.awaiting_followup = False
-                st.write(st.session_state.current_preferences)
-                ordered_keys = [
-                    "gearbox", "fueltype", "bodytype", "numberOfDoors", "driveType",
-                    "numberOfSeats", "performance_kw", "cubic_capacity", "price_max",
-                    "mealage_max", "first_registration_year_minimum"
-                ]
-                ordered_values = [st.session_state.current_preferences.get(key) for key in ordered_keys]
-                st.write(ordered_values)
-
-                query_vector = preprocess_input(
-                    ordered_values[2],  # category
-                    ordered_values[3],  # doors
-                    ordered_values[10], # first_reg
-                    ordered_values[0],  # gearbox
-                    str(ordered_values[5]),  # seats
-                    ordered_values[1],  # fuel_type
-                    ordered_values[6],  # performance
-                    ordered_values[4],  # drivetype
-                    ordered_values[7]   # cubiccapacity
-                )
-
-                results, count_results = search_similar_cars_without_filters(
-                    query_vector,
-                    numberofcars,
-                    similarity_threshold=percentagefinal,
-                )
-
-                if results:
-                    st.markdown("<br>", unsafe_allow_html=True)
-                    for car in results:
-                        car_data = car["_source"]
-                        real_ID = car_data["CarID"]
-                        full_car_info = get_car_by_id(real_ID)
-
-                        if full_car_info:
-                            st.write(f"🆔 ID: {full_car_info['CarID']}")
-                            st.write(f"🔥 Body Type: {full_car_info.get('BodyType', 'N/A')}")
-                            st.write(f"📏 Make: {full_car_info['Make']}  | 📏 Model: {full_car_info.get('Model', 'N/A')} ")
-                            st.write(f"⚙️ Gearbox: {full_car_info.get('GearBox', 'N/A')} | ⛽ Fuel Type : {full_car_info.get('Fuel', 'N/A')}")
-                            st.write(f"💡 Body Color: {full_car_info.get('BodyColor', 'N/A')} | 🚪 Doors : {full_car_info.get('NumberOfDoors', 'N/A')}")
-                            st.write(f"🚙 Drive Type: {full_car_info.get('DriveType', 'N/A')} | 🚗📏 Mileage : {full_car_info.get('Mileage', 'N/A')}")
-                            st.write(f"🏁 Cubic Capacity: {full_car_info.get('CubicCapacity', 'N/A')} | ⚡ Performance : {full_car_info.get('Power', 'N/A')}")
-                            st.write(f"👥 Number Of Seats: {full_car_info.get('NumberOfSeats', 'N/A')} | 🛠️ Usage State : {full_car_info.get('UsageState', 'N/A')}")
-                            st.write(f"📅 First Registration: {full_car_info.get('FirstRegistration', 'N/A')} | 💰 Price: {full_car_info.get('Price', 'N/A')}")
-                            st.write("---")
-                        else:
-                            st.write(f"❌ Car with ID {real_ID} not found in DynamoDB.")
-                else:
-                    st.write("❌ No similar cars found.")
-
-            st.stop()  # prevent GPT call if user input was neutral
-
-        # If user didn't say "any" or similar, call GPT
-        follow_up_prompt = build_follow_up_prompt(
-             st.session_state.current_preferences,
-             extract_missing_fields(st.session_state.current_preferences),
-             user_input
-        )
-        system_prompt = get_system_prompt("followup", user_input)
-        gpt_response = call_gpt(follow_up_prompt, system_prompt).strip()
+        system_prompt = get_system_prompt("initial")
+        gpt_response = call_gpt(user_input, system_prompt).strip()
 
         followup_prefs = None
         gpt_gave_json = False
@@ -860,20 +732,19 @@ if submitted and user_input:
                 followup_prefs = json.loads(gpt_response)
                 gpt_gave_json = True
             else:
-                # 🧠 Accept non-JSON as helpful explanation
-                 st.session_state.chat_history.append({"role": "assistant", "content": gpt_response})
-                 render_chat_history()
-                 st.stop()
+                st.session_state.chat_history.append({"role": "assistant", "content": "[⚠️ Antwort war kein reines JSON – bitte noch einmal formulieren.]"})
         except Exception:
-            render_chat_history()
-            st.stop()
+                render_chat_history()
+                st.stop()
+
 
         if not gpt_gave_json:
             st.session_state.chat_history.append({"role": "assistant", "content": gpt_response})
             render_chat_history()
             st.stop()
-
+            
         elif followup_prefs:
+        
             st.session_state.current_preferences.update({k: v for k, v in followup_prefs.items() if v is not None})
             still_missing = extract_missing_fields(st.session_state.current_preferences)
 
@@ -883,10 +754,9 @@ if submitted and user_input:
                     still_missing,
                     user_input
                 )
-                st.session_state.last_missing_field = still_missing[0]
                 follow_up_question = call_gpt(
                     follow_up_prompt,
-                    get_system_prompt("followup", user_input),
+                    get_system_prompt("followup"),
                     0.4,
                     200
                 )
@@ -894,57 +764,64 @@ if submitted and user_input:
                 render_chat_history()
             else:
                 st.session_state.awaiting_followup = False
-                # Final logic already above
                 st.write(st.session_state.current_preferences)
                 ordered_keys = [
-                    "gearbox", "fueltype", "bodytype", "numberOfDoors", "driveType",
-                    "numberOfSeats", "performance_kw", "cubic_capacity", "price_max",
-                    "mealage_max", "first_registration_year_minimum"
+                   "gearbox",
+                   "fueltype",
+                   "bodytype",
+                   "numberOfDoors",
+                   "driveType",
+                   "numberOfSeats",
+                   "performance_kw",
+                   "cubic_capacity",
+                   "price_max",
+                   "mealage_max",
+                   "first_registration_year_minimum"
                 ]
                 ordered_values = [st.session_state.current_preferences.get(key) for key in ordered_keys]
                 st.write(ordered_values)
-
                 query_vector = preprocess_input(
-                    ordered_values[2],  # category
-                    ordered_values[3],  # doors
-                    ordered_values[10], # first_reg
-                    ordered_values[0],  # gearbox
-                    str(ordered_values[5]),  # seats
-                    ordered_values[1],  # fuel_type
-                    ordered_values[6],  # performance
-                    ordered_values[4],  # drivetype
-                    ordered_values[7]   # cubiccapacity
+                     ordered_values[2],  # category
+                     ordered_values[3],  # doors
+                     ordered_values[10],  # first_reg
+                     ordered_values[0],  # gearbox
+                     str(ordered_values[5]),  # seats
+                     ordered_values[1],  # fuel_type
+                     ordered_values[6],  # performance
+                     ordered_values[4],  # drivetype
+                     ordered_values[7]   # cubiccapacity
                 )
-
+              
                 results, count_results = search_similar_cars_without_filters(
-                    query_vector,
-                    numberofcars,
-                    similarity_threshold=percentagefinal,
+                        query_vector,
+                        numberofcars,
+                        similarity_threshold=percentagefinal,
                 )
-
                 if results:
-                    st.markdown("<br>", unsafe_allow_html=True)
-                    for car in results:
-                        car_data = car["_source"]
-                        real_ID = car_data["CarID"]
-                        full_car_info = get_car_by_id(real_ID)
-
-                        if full_car_info:
-                            st.write(f"🆔 ID: {full_car_info['CarID']}")
-                            st.write(f"🔥 Body Type: {full_car_info.get('BodyType', 'N/A')}")
-                            st.write(f"📏 Make: {full_car_info['Make']}  | 📏 Model: {full_car_info.get('Model', 'N/A')} ")
-                            st.write(f"⚙️ Gearbox: {full_car_info.get('GearBox', 'N/A')} | ⛽ Fuel Type : {full_car_info.get('Fuel', 'N/A')}")
-                            st.write(f"💡 Body Color: {full_car_info.get('BodyColor', 'N/A')} | 🚪 Doors : {full_car_info.get('NumberOfDoors', 'N/A')}")
-                            st.write(f"🚙 Drive Type: {full_car_info.get('DriveType', 'N/A')} | 🚗📏 Mileage : {full_car_info.get('Mileage', 'N/A')}")
-                            st.write(f"🏁 Cubic Capacity: {full_car_info.get('CubicCapacity', 'N/A')} | ⚡ Performance : {full_car_info.get('Power', 'N/A')}")
-                            st.write(f"👥 Number Of Seats: {full_car_info.get('NumberOfSeats', 'N/A')} | 🛠️ Usage State : {full_car_info.get('UsageState', 'N/A')}")
-                            st.write(f"📅 First Registration: {full_car_info.get('FirstRegistration', 'N/A')} | 💰 Price: {full_car_info.get('Price', 'N/A')}")
-                            st.write("---")
-                        else:
-                            st.write(f"❌ Car with ID {real_ID} not found in DynamoDB.")
+                 # Filtering the data depends on the choice of the user
+                 st.markdown("<br>", unsafe_allow_html=True)
+                 for car in results:
+            
+                     car_data = car["_source"]       
+                     real_ID = car_data["CarID"]
+                     full_car_info = get_car_by_id(real_ID)
+        
+                     if full_car_info:
+                         st.write(f"🆔 ID: {full_car_info['CarID']}")
+                         st.write(f"🔥 Body Type: {full_car_info.get('BodyType', 'N/A')}")
+                         st.write(f"📏 Make: {full_car_info['Make']}  | 📏 Model: {full_car_info.get('Model', 'N/A')} ")
+                         st.write(f"⚙️ Gearbox: {full_car_info.get('GearBox', 'N/A')} | ⛽ Fuel Type : {full_car_info.get('Fuel', 'N/A')}")
+                         st.write(f"💡 Body Color: {full_car_info.get('BodyColor', 'N/A')} | 🚪 Doors : {full_car_info.get('NumberOfDoors', 'N/A')}")
+                         st.write(f"🚙 Drive Type: {full_car_info.get('DriveType', 'N/A')} | 🚗📏 Mileage : {full_car_info.get('Mileage', 'N/A')}")
+                         st.write(f"🏁 Cubic Capacity: {full_car_info.get('CubicCapacity', 'N/A')} | ⚡ Performance : {full_car_info.get('Power', 'N/A')}")
+                         st.write(f"👥 Number Of Seats: {full_car_info.get('NumberOfSeats', 'N/A')} | 🛠️ Usage State : {full_car_info.get('UsageState', 'N/A')}")
+                         st.write(f"📅 First Registration: {full_car_info.get('FirstRegistration', 'N/A')} | 💰 Price: {full_car_info.get('Price', 'N/A')}")
+                         #st.write(f"📅 Score : {car['_score']}")
+                         st.write("---")
+                     else:
+                      st.write(f"❌ Car with ID {real_ID} not found in DynamoDB.")
                 else:
                     st.write("❌ No similar cars found.")
 
-            
-      
+
 
