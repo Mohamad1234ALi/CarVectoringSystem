@@ -469,13 +469,21 @@ if st.button("Find Similar Cars") :
         st.write("❌ No similar cars found.")
 
 
-CATEGORICAL_FIELDS = {
-    "gearbox",
-    "fueltype",
-    "bodytype",
-    "numberOfDoors",
-    "driveType"
-}
+
+def user_says_rest_doesnt_matter(user_msg):
+    user_msg = user_msg.lower()
+    phrases = [
+        "i don't care about the rest",
+        "i don't care about the others",
+        "alles andere ist mir egal",
+        "mir ist der rest egal",
+        "rest doesn't matter",
+        "the rest doesn't matter",
+        "everything else is fine",
+        "whatever else",
+        "egal was sonst"
+    ]
+    return any(p in user_msg for p in phrases)
 
 def handle_any_statements(json_text, user_message, current_prefs=None):
     """
@@ -680,7 +688,13 @@ def extract_missing_fields(prefs):
                        "mealage_max", "first_registration_year_minimum"]
     return [field for field in required_fields if prefs.get(field) is None]
 
-
+CATEGORICAL_FIELDS = {
+    "gearbox",
+    "fueltype",
+    "bodytype",
+    "numberOfDoors",
+    "driveType"
+}
 
 def call_gpt(user_input, system_prompt, temperature=0.4, max_tokens=300):
 
@@ -750,6 +764,11 @@ if submitted and user_input:
             if re.match(r"^\s*\{[\s\S]*\}\s*$", json_text):
                parsed = handle_any_statements(json_text, user_input)
                if parsed:
+                    # User said "I don't care about the rest"
+                    if user_says_rest_doesnt_matter(user_input):
+                         for field in CATEGORICAL_FIELDS:
+                            if parsed.get(field) is None:
+                                parsed[field] = "any"
                     st.session_state.current_preferences = parsed
                else:
                     st.session_state.current_preferences = None
