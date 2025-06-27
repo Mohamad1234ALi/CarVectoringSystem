@@ -768,24 +768,27 @@ if submitted and user_input:
 
             still_missing = extract_missing_fields(st.session_state.current_preferences)
 
-            if field_to_update in still_missing:
-                still_missing.remove(field_to_update)
-
             if still_missing:
+
+                st.session_state.last_missing_field = still_missing[0]
+
                 follow_up_prompt = build_follow_up_prompt(
                     st.session_state.current_preferences,
                     still_missing,
                     user_input
                 )
-                st.session_state.last_missing_field = still_missing[0]
+
                 follow_up_question = call_gpt(
                     follow_up_prompt,
                     get_system_prompt("followup", user_input),
                     0.4,
                     200
                 )
+
                 st.session_state.chat_history.append({"role": "assistant", "content": follow_up_question})
                 render_chat_history()
+                st.stop()
+
             else:
                 st.session_state.awaiting_followup = False
                 st.write(st.session_state.current_preferences)
