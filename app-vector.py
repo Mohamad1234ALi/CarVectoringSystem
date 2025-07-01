@@ -1,3 +1,4 @@
+from tkinter import messagebox
 import streamlit as st
 import numpy as np
 import pandas as pd
@@ -470,71 +471,6 @@ if st.button("Find Similar Cars") :
 
 
 
-def user_says_rest_doesnt_matter(user_msg):
-    user_msg = user_msg.lower()
-    phrases = [
-        "i don't care about the rest",
-        "i don't care about the others",
-        "alles andere ist mir egal",
-        "mir ist der rest egal",
-        "rest doesn't matter",
-        "the rest doesn't matter",
-        "everything else is fine",
-        "whatever else",
-        "egal was sonst"
-    ]
-    return any(p in user_msg for p in phrases)
-
-def handle_any_statements(json_text, user_message, current_prefs=None):
-    """
-    Updates parsed JSON response to handle 'any' logic for categorical fields.
-
-    - If the user says something like "I don't care about the others" → sets all missing categorical fields to "any".
-    - If the user says "any", "egal", or similar → sets missing categorical field(s) to "any".
-    - Applies fallback when only one categorical field is missing and user says "any".
-    """
-
-    CATEGORICAL_FIELDS = {
-        "gearbox",
-        "fueltype",
-        "bodytype",
-        "numberOfDoors",
-        "driveType"
-    }
-
-    try:
-        parsed = json.loads(json_text)
-    except Exception:
-        return None  # If it's not valid JSON, exit
-
-    user_msg_lower = user_message.strip().lower()
-    any_phrases = ["any", "egal", "whatever", "doesn't matter", "don't care", "no preference", "kein unterschied", "macht nichts", "egal ist mir"]
-
-    # Global 'any': apply to all missing categorical fields
-    if any(phrase in user_msg_lower for phrase in ["i don't care about the others", "i don't care about the rest", "mir egal was der rest ist", "alles andere ist mir egal"]):
-        for field in CATEGORICAL_FIELDS:
-            if (current_prefs is None or current_prefs.get(field) is None) and parsed.get(field) is None:
-                parsed[field] = "any"
-
-    # Field-specific 'any' detection (if user refers to a field directly)
-    for field in CATEGORICAL_FIELDS:
-        if field in user_msg_lower or field.lower().replace("_", " ") in user_msg_lower:
-            if any(phrase in user_msg_lower for phrase in any_phrases):
-                parsed[field] = "any"
-
-    # Fallback: if user says only "any" and exactly one categorical field is missing
-    if any(user_msg_lower.strip() == phrase for phrase in any_phrases):
-        if current_prefs:
-            missing = [
-                field for field in CATEGORICAL_FIELDS
-                if current_prefs.get(field) is None and parsed.get(field) is None
-            ]
-            if len(missing) == 1:
-                parsed[missing[0]] = "any"
-
-    return parsed
-
-
 def render_chat_history():
     for msg in reversed(st.session_state.chat_history):
         if msg["role"] == "user":
@@ -551,24 +487,27 @@ if "chat_history" not in st.session_state:
 
 # Build follow-up prompt dynamically from preferences and missing fields
 def build_follow_up_prompt(prefs, missing_fields, last_user_message=""):
-    json_formatted = json.dumps(prefs, indent=2)
+    #json_formatted = json.dumps(prefs, indent=2)
    
 
-    return f"""
+    json_str = json.dumps(prefs, indent=4, ensure_ascii=False)
+
+    prompt = f'''
 You are helping a user find a suitable used car.
 
 Based on the previous message, we extracted the following preferences:
 
-{json_formatted}
+{json_str}
 
 Some values are still missing: {", ".join(missing_fields)}.
 
-The user just wrote: \"{last_user_message}\".
+The user just wrote: "{last_user_message}".
 
 🎯 Your task:
 → If the user clearly gives one of the missing values, return a new valid JSON object with only that update.
 → If the user sounds unsure or confused, respond in natural language. Do NOT return JSON in that case.
 
+❗ If the user says “egal”, “any” or “doesn’t matter” for a missing field, set only that specific field to "any".
 If they seem unsure or ask for help (e.g. “Ich weiß nicht”, “Hilf mir”, “Hilfe”, “Help me”), do NOT repeat the same question.
 
 Instead:
@@ -585,101 +524,158 @@ Instead:
   - “How old can the car be at most?”
 
 Respond in the same language the user used.
-""".strip()
+    '''
+
+    return prompt.strip()
 
 # System prompts
 
 def get_system_prompt(phase, last_user_message=""):
     if phase == "initial":
-        return r'''You are a smart and helpful car assistant. Your task is to understand what kind of car the user is looking for, based on natural language.
+        return """
+You are a smart and helpful car assistant. Your task is to understand what kind of car the user is looking for, based on natural language.
 
-You will extract their wishes and return them as a valid JSON object using the format and allowed values below.
+You will extract their preferences and return them as a valid JSON object using the format and allowed values below.
 
-
-🎯 Your goal is to fill all fields that can be reasonably inferred. Use the exact terms shown. If something is unclear or missing, set it to `null`.
+🎯 Your goal is to fill all fields that can be reasonably inferred from the user's input. Use the exact terms shown.  
+If a field is missing, unclear, or cannot be inferred, set it to null.
 
 ❗ If the user explicitly says they do NOT want something (e.g. "no limousine", "not electric", "not diesel"),  
-✅ then set the corresponding value to `null` unless another valid alternative is clearly preferred.
+✅ then set the corresponding value to null unless a clear preferred alternative is provided.  
 
-Allowed values and structure:
+🟢 🟢 If the user expresses indifference (e.g., “egal”, “beliebig”, “keine Präferenz”) for a specific field, then and only then set that field to "any" (for text fields) or -1 (for numeric fields).
 
-{{
-  "gearbox": "AUTOMATIC" | "MANUAL" | "SEMI_AUTOMATIC",
-  "fueltype": "CNG" | "DIESEL" | "ELECTRICITY" | "ETHANOL" | "HYBRID" | "HYBRID_DIESEL" | "LPG" | "OTHER" | "PETROL",
-  "bodytype": "CABRIO" | "ESTATE_CAR" | "LIMOUSINE" | "OFFROAD" | "OTHER_CAR" | "SMALL_CAR" | "SPORTS_CAR" | "VAN",
-  "numberOfDoors": "TWO_OR_THREE" | "FOUR_OR_FIVE" | "SIX_OR_SEVEN",
-  "driveType": "ALL_WHEEL" | "FRONT" | "REAR",
-  "numberOfSeats": integer,
-  "performance_kw": integer,
-  "cubic_capacity": integer,
-  "price_max": integer,
-  "mealage_max": integer,
-  "first_registration_year_minimum": integer
-}}
+🔒 Do not assume that the user is indifferent to all other fields.
 
-🧠 Interpret common phrases:
-- “klein”, “für die Stadt”, “wenig PS” → SMALL_CAR, ≤ 1300ccm, ≤ 70 kW, FRONT
-- “durchschnittlich”, “egal” → ~1600ccm, ~85kW
-- “stark”, “Autobahn”, “Urlaub” → ≥2000ccm, ≥110kW
+🛑 Never set fields to "any" or -1 **unless** the user has explicitly expressed indifference for that **specific** field.
 
-⚠️ Important:
-- Convert: “1.5 Liter” → 1500ccm, “150 PS” → 110kW
-- Accept: “ab 2016” → first_registration_year_minimum = 2017
-- Accept: “bis 120.000 km” → mealage_max = 120000
+👂 Wait until the user has answered a question about a specific field. If the user says "egal" or similar, then apply the rule — otherwise leave the field as null or skip it entirely.
 
-💬 Return only the JSON. No extra explanation or comments. All strings in double quotes.
-Always respond in the same language the user used in their last message.'''
-    
-    else:
-        return fr'''You are a warm, helpful and intuitive assistant helping a person find a used car that fits their needs.
+🔁 If the user provides approximate values (e.g. “ca. 90 PS”), convert to a rounded integer in kW or ccm where possible.
 
-You already received some preferences in JSON format, but a few values are still missing.
-
-🎯 Your task: Based on the user's last message, either:
-→ return a new valid JSON object (if the user provides clear preferences),  
-→ or respond in natural language (if the user seems confused or needs help).
-
-❗ Only ask about parameters that exist in the following JSON schema:
-
-{{
-  "gearbox": "AUTOMATIC" | "MANUAL" | "SEMI_AUTOMATIC",
-  "fueltype": "CNG" | "DIESEL" | "ELECTRICITY" | "ETHANOL" | "HYBRID" | "HYBRID_DIESEL" | "LPG" | "OTHER" | "PETROL",
-  "bodytype": "CABRIO" | "ESTATE_CAR" | "LIMOUSINE" | "OFFROAD" | "OTHER_CAR" | "SMALL_CAR" | "SPORTS_CAR" | "VAN",
-  "numberOfDoors": "TWO_OR_THREE" | "FOUR_OR_FIVE" | "SIX_OR_SEVEN",
-  "driveType": "ALL_WHEEL" | "FRONT" | "REAR",
-  "numberOfSeats": integer,
-  "performance_kw": integer,
-  "cubic_capacity": integer,
-  "price_max": integer,
-  "mealage_max": integer,
-  "first_registration_year_minimum": integer
-}}
-
-Only ask about one missing value at a time. Always start with the most important one (e.g. fueltype > performance_kw). This keeps the conversation simple and natural.
-
-❌ Do not ask about brands, models, colors, readiness, price negotiation, or any features not in the schema.
+❓ If the user's statements are contradictory, unclear, or invalid (e.g. unknown fuel types), set the affected field(s) to null.
 
 ---
 
-📌 The user’s last message was: "{last_user_message}"
+Allowed values and expected format:
 
-🧠 Decision logic:
+{
+  "gearbox": "AUTOMATIC" | "MANUAL" | "SEMI_AUTOMATIC",
+  "fueltype": "CNG" | "DIESEL" | "ELECTRICITY" | "ETHANOL" | "HYBRID" | "HYBRID_DIESEL" | "LPG" | "OTHER" | "PETROL",
+  "bodytype": "CABRIO" | "ESTATE_CAR" | "LIMOUSINE" | "OFFROAD" | "OTHER_CAR" | "SMALL_CAR" | "SPORTS_CAR" | "VAN",
+  "numberOfDoors": "TWO_OR_THREE" | "FOUR_OR_FIVE" | "SIX_OR_SEVEN",
+  "driveType": "ALL_WHEEL" | "FRONT" | "REAR",
+  "numberOfSeats": integer,
+  "performance_kw": integer,
+  "cubic_capacity": integer,
+  "price_max": integer,
+  "mealage_max": integer,
+  "first_registration_year_minimum": integer
+}
 
-If the user is clear and confident (e.g. “I prefer automatic”, “max 20.000 km”, “at least 5 seats”)  
-✅ then return a JSON object that adds or updates the missing values. Use only the allowed values.
+---
 
-If the user says “any”, “egal”, “whatever”, or “doesn’t matter” →  
-✅ For categorical fields, return "any" as the value.
+🧠 Interpret common phrases and convert accordingly:
 
+- “klein”, “für die Stadt”, “wenig PS” → "bodytype": "SMALL_CAR", "cubic_capacity" ≤ 1300, "performance_kw" ≤ 70, "driveType": "FRONT"
+- “durchschnittlich”, “normal”, “egal” (in context of engine) → "cubic_capacity" ≈ 1600, "performance_kw" ≈ 85
+- “stark”, “Autobahn”, “Urlaub”, “schnell”, “kräftig” → "cubic_capacity" ≥ 2000, "performance_kw" ≥ 110
+- “1.5 Liter” → "cubic_capacity": 1500
+- “150 PS” → "performance_kw": 110
+- “ab 2016” → "first_registration_year_minimum": 2017
+- “bis 120.000 km” → "mealage_max": 120000
+- “7-Sitzer”, “für 7 Personen” → "numberOfSeats": 7
+- “5 Personen”, “für die Familie” → "numberOfSeats": 5
 
-If the user sounds confused or unsure (e.g. says “I don’t know”, “hilf mir”, “keine Ahnung”, “what would you suggest?”)  
-✅ then do NOT return JSON.  
-✅ Instead, explain briefly (1–2 friendly sentences) what the missing value means,  
-✅ and ask a simple follow-up question or suggest a common default.
+---
 
-🛑 Never mix both formats in one response.  
-🛑 Never mention the word JSON or technical terms.  
-✅ Be warm, simple and speak in the user’s language.'''
+💬 The response must be a valid JSON object only – no text, no comments, no explanation.  
+🚫 Do not write anything except the JSON object.  
+Always respond in the same language the user used in their last message.
+🔚 If all fields in the JSON object are filled with specific values — that is:
+- no field is set to "any" (for categorical fields),
+- no field is set to -1 (for numerical fields),
+- and no field is null —
+
+→ Then immediately stop asking further questions  
+→ and return the final JSON object with all collected values.
+
+✅ Do not wait for the user to say "done" or "show me the cars".
+""".strip()
+
+    elif phase == "followup":
+        template = """
+You are a warm, helpful and intuitive assistant helping a person find a used car that fits their needs.
+
+You already received some preferences in JSON format, but a few values are still missing.
+
+🎯 Your task: Based on the user's last message, either:  
+→ return a new valid JSON object (if the user provides clear preferences),  
+→ or respond in natural language (if the user seems unsure or needs help).
+
+If a field is missing, unclear, or cannot be inferred, set it to null.  
+🟢 If the user expresses indifference (e.g., “egal”, “beliebig”, “keine Präferenz”) for a specific field, then and only then set that field to "any" (for text fields) or -1 (for numeric fields).
+
+🔒 Do not assume that the user is indifferent to all other fields.
+
+🛑 Never set fields to "any" or -1 **unless** the user has explicitly expressed indifference for that **specific** field.
+
+👂 Wait until the user has answered a question about a specific field. If the user says "egal" or similar, then apply the rule — otherwise leave the field as null or skip it entirely.❗ Only ask about parameters defined in the following JSON schema:
+
+{
+  "gearbox": "AUTOMATIC" | "MANUAL" | "SEMI_AUTOMATIC",
+  "fueltype": "CNG" | "DIESEL" | "ELECTRICITY" | "ETHANOL" | "HYBRID" | "HYBRID_DIESEL" | "LPG" | "OTHER" | "PETROL",
+  "bodytype": "CABRIO" | "ESTATE_CAR" | "LIMOUSINE" | "OFFROAD" | "OTHER_CAR" | "SMALL_CAR" | "SPORTS_CAR" | "VAN",
+  "numberOfDoors": "TWO_OR_THREE" | "FOUR_OR_FIVE" | "SIX_OR_SEVEN",
+  "driveType": "ALL_WHEEL" | "FRONT" | "REAR",
+  "numberOfSeats": integer,
+  "performance_kw": integer,
+  "cubic_capacity": integer,
+  "price_max": integer,
+  "mealage_max": integer,
+  "first_registration_year_minimum": integer
+}
+
+🧠 Interpret common phrases:
+- “klein”, “für die Stadt”, “wenig PS” → SMALL_CAR, ≤ 1300ccm, ≤ 70 kW, FRONT
+- “durchschnittlich”, “egal” (motor-related) → ~1600ccm, ~85kW
+- “stark”, “Autobahn”, “Urlaub”, “kräftig” → ≥2000ccm, ≥110kW
+- “1.5 Liter” → 1500ccm, “150 PS” → 110kW
+- “ab 2016” → first_registration_year_minimum = 2017
+- “bis 120.000 km” → mealage_max = 120000
+- “5 Personen”, “Familienauto” → numberOfSeats = 5
+- “7-Sitzer”, “für 7 Leute” → numberOfSeats = 7
+
+Only ask about one missing field at a time. Always begin with the most relevant one (e.g. fueltype > performance_kw).
+
+💬 If the user gives a clear answer (e.g. “I prefer automatic”, “max 20.000 km”, “at least 5 seats”)  
+✅ return a new full JSON object, updated with this information. Use only the allowed values.
+
+🤝 If the user seems unsure (e.g. says “keine Ahnung”, “was meinst du?”, “hilf mir”, “I don’t know”)  
+✅ do not return JSON. Instead:  
+– explain in 1–2 friendly sentences what the missing value means  
+– ask a helpful, simple follow-up question or suggest a common option
+
+🛑 Never mix JSON and natural language in one response.  
+🛑 Never mention the word “JSON”, “schema”, “format” or any technical terms.  
+✅ Always reply in the same language the user used.
+✅ Be warm, respectful and easy to understand.
+🔚 If all fields in the JSON object are filled with specific values — that is:
+- no field is set to "any" (for categorical fields),
+- no field is set to -1 (for numerical fields),
+- and no field is null —
+
+→ Then immediately stop asking further questions
+→ and return the final JSON object with all collected values.
+
+✅ Do not wait for the user to say "done" or "show me the cars".
+
+""".strip()
+        return template
+
+    else:
+        raise ValueError(f"Unknown prompt phase: {phase}")
+
 
 
 def extract_missing_fields(prefs):
@@ -688,13 +684,6 @@ def extract_missing_fields(prefs):
                        "mealage_max", "first_registration_year_minimum"]
     return [field for field in required_fields if prefs.get(field) is None]
 
-CATEGORICAL_FIELDS = {
-    "gearbox",
-    "fueltype",
-    "bodytype",
-    "numberOfDoors",
-    "driveType"
-}
 
 def call_gpt(user_input, system_prompt, temperature=0.4, max_tokens=300):
 
@@ -753,25 +742,17 @@ if submitted and user_input:
     user_input_lower = user_input.lower()
 
     if not st.session_state.awaiting_followup:
+
         system_prompt = get_system_prompt("initial")
         json_text = call_gpt(user_input, system_prompt).strip()
-        st.write(f"🤖 Assistant: {json_text}")
+
 
         st.session_state.current_preferences = None
 
-
+    
         try:
             if re.match(r"^\s*\{[\s\S]*\}\s*$", json_text):
-               parsed = handle_any_statements(json_text, user_input)
-               if parsed:
-                    # User said "I don't care about the rest"
-                    if user_says_rest_doesnt_matter(user_input):
-                         for field in CATEGORICAL_FIELDS:
-                            if parsed.get(field) is None:
-                                parsed[field] = "any"
-                    st.session_state.current_preferences = parsed
-               else:
-                    st.session_state.current_preferences = None
+                st.session_state.current_preferences = json.loads(json_text)
             else:
                 st.session_state.chat_history.append({"role": "assistant", "content": "[⚠️ Antwort war kein reines JSON – bitte noch einmal formulieren.]"})
         except Exception:
@@ -805,18 +786,16 @@ if submitted and user_input:
         render_chat_history()      
 
     else:
-        system_prompt = get_system_prompt("initial")
-        gpt_response = call_gpt(user_input, system_prompt).strip()
+        system_prompt = get_system_prompt("followup", user_input)
+        gpt_response = call_gpt(user_input, system_prompt, 0.4, 300).strip()
 
         followup_prefs = None
         gpt_gave_json = False
 
         try:
             if re.match(r"^\s*\{[\s\S]*\}\s*$", gpt_response):
-                parsed = handle_any_statements(gpt_response, user_input, st.session_state.current_preferences)
-                if parsed:
-                    followup_prefs = parsed
-                    gpt_gave_json = True
+                followup_prefs = json.loads(gpt_response)
+                gpt_gave_json = True
             else:
                 st.session_state.chat_history.append({"role": "assistant", "content": "[⚠️ Antwort war kein reines JSON – bitte noch einmal formulieren.]"})
         except Exception:
