@@ -108,6 +108,10 @@ onehot_encoder.fit(dummy_input)
 # Function to convert user input into vector
 def preprocess_input(category, doors, first_reg, gearbox, seats, fuel_type, performance, drivetype, cubiccapacity):
   
+    if seats == -1:
+        seats = "Any"
+
+
     cat_data = {
     "BodyType": None if category == "Any" else category,
     "Fuel": None if fuel_type == "Any" else fuel_type,
@@ -124,9 +128,9 @@ def preprocess_input(category, doors, first_reg, gearbox, seats, fuel_type, perf
    # Apply log1p to numerical features
     
     numerical_input = [
-        0 if first_reg in ["Any", None] else first_reg,
-        0 if performance in ["Any", None] else performance,
-        0 if cubiccapacity in ["Any", None] else cubiccapacity
+        0 if first_reg in ["Any", None, -1] else first_reg,
+        0 if performance in ["Any", None, -1] else performance,
+        0 if cubiccapacity in ["Any", None, -1] else cubiccapacity
     ]
     log_transformed = np.log1p(numerical_input).reshape(1, -1)
 
