@@ -808,6 +808,7 @@ if submitted and user_input:
 
 
         if not gpt_gave_json:
+            st.write("GPT gave no JSON")
             st.session_state.chat_history.append({"role": "assistant", "content": gpt_response})
             render_chat_history()
             st.stop()
