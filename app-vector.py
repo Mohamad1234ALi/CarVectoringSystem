@@ -811,8 +811,13 @@ if submitted and user_input:
             st.write("GPT gave no JSON")
             st.session_state.chat_history.append({"role": "assistant", "content": gpt_response})
             render_chat_history()
-            st.stop()
-            
+            #st.stop()
+            still_missing_check = extract_missing_fields(st.session_state.current_preferences)
+            if still_missing_check:
+                st.stop()
+            else:
+                st.write("No missing fields found. finished")
+
         elif followup_prefs:
         
             st.session_state.current_preferences.update({k: v for k, v in followup_prefs.items() if v is not None})
