@@ -780,6 +780,7 @@ if submitted and user_input:
                     0.4,
                     150
                 )
+                st.write("still missing part and true")
                 st.session_state.chat_history.append({"role": "assistant", "content": follow_up_question})
                 st.session_state.awaiting_followup = True
             else:
