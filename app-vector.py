@@ -828,9 +828,12 @@ if submitted and user_input:
                     0.4,
                     200
                 )
+                st.write("still missing part")
                 st.session_state.chat_history.append({"role": "assistant", "content": follow_up_question})
                 render_chat_history()
+                
             else:
+                st.write("Finished collecting preferences! 🎉")
                 st.session_state.awaiting_followup = False
                 st.write(st.session_state.current_preferences)
                 ordered_keys = [
