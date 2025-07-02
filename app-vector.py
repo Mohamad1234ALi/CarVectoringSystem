@@ -679,7 +679,15 @@ Only ask about one missing field at a time. Always begin with the most relevant 
     else:
         raise ValueError(f"Unknown prompt phase: {phase}")
 
-
+def extract_json_from_response(response: str):
+    match = re.search(r'\{[\s\S]*\}', response)
+    if match:
+        try:
+            return json.loads(match.group())
+        except json.JSONDecodeError as e:
+            print("❌ JSON decode failed:", e)
+            return None
+    return None
 
 def extract_missing_fields(prefs):
     required_fields = ["gearbox", "fueltype", "bodytype", "numberOfDoors", "driveType",
@@ -810,15 +818,18 @@ if submitted and user_input:
         if not gpt_gave_json:
             st.write("GPT gave no JSON")
             st.session_state.chat_history.append({"role": "assistant", "content": gpt_response})
-            still_missing_check = extract_missing_fields(st.session_state.current_preferences)
-            if still_missing_check:
-                st.write(" missing fields found. ha")
-                render_chat_history()
-                st.stop()
+            parsed_json = extract_json_from_response(gpt_response)
+            if parsed_json:
+                still_missing_check = extract_missing_fields(parsed_json)
+                if still_missing_check:
+                    st.write(" missing fields found. ha")
+                    render_chat_history()
+                    st.stop()
+                else:
+                    st.write("No missing fields found. finished")
             else:
-                st.write("No missing fields found. finished")
-            
-            #st.stop()
+                st.write("Failed to parse JSON from GPT response")
+                st.stop()
            
 
         elif followup_prefs:
