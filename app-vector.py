@@ -12,6 +12,8 @@ import boto3
 import random
 import re
 import json
+import openai
+from openai import AzureOpenAI
 
 # OpenSearch Configuration
 OPENSEARCH_HOST = st.secrets["OPENSEARCH_HOST"] # the opensearch endpoint
@@ -72,6 +74,13 @@ client = OpenSearch(
     use_ssl=True,
     verify_certs=True,
     timeout=30
+)
+
+
+client_azure = AzureOpenAI(
+    api_key=api_key,
+    api_version="2024-12-01-preview",
+    azure_endpoint=endpoint
 )
 
 # Define categorical and numerical features
@@ -228,37 +237,61 @@ def search_similar_cars_with_filters(
     random.shuffle(filtered)
     return filtered[:numberofcars], count_result
   
+
+def get_embedding(text):
+    response = client_azure.embeddings.create(
+        input=text,
+        model="text-embedding-3-large"  # Azure deployment name (not model name)
+    )
+    return response.data[0].embedding
+
 def search_similar_cars_without_filters(
-    query_vector, 
+    user_inputs, 
     numberofcars, 
     similarity_threshold,
     
 ):
   
     # Construct the query with bool filter and knn must
+    description = generate_description(user_inputs)
+    query_vector = get_embedding(description)
+
     query = {
-     "size": numberofcars * 10,
-     "query": {
-        "knn": {
-            "vector": {
-                "vector": query_vector.tolist(),
-                "k": numberofcars * 10
+        "size": numberofcars * 10,
+        "query": {
+            "knn": {
+                "description_vector": {  # Use the field name for description vectors
+                    "vector": query_vector,
+                    "k": numberofcars * 10
+                }
             }
         }
-      }
     }
 
-
-    
-    # Execute the search
     response = client.search(index=INDEX_NAME, body=query)
     results = response["hits"]["hits"]
+
     count_result = len(results)
 
     # Optional: filter results by similarity threshold on _score
     filtered = [r for r in results if r["_score"] >= similarity_threshold]
     random.shuffle(filtered)
     return filtered[:numberofcars], count_result
+
+def test(
+    user_inputs, 
+    numberofcars, 
+    similarity_threshold,
+    
+):
+  
+    # Construct the query with bool filter and knn must
+    description = generate_description(user_inputs)
+    query_vector = get_embedding(description)
+
+    return description, query_vector
+
+
 
 
 def search_count_Filter(
@@ -490,6 +523,16 @@ if "chat_history" not in st.session_state:
     st.session_state.awaiting_followup = False
     st.session_state.current_preferences = {}
     
+
+def generate_description(user_inputs):
+    return (
+        f"This car is a {user_inputs['bodytype']} with {user_inputs['driveType']} drive, "
+        f"{user_inputs['gearbox']} gearbox, runs on {user_inputs['fueltype']}, has {user_inputs['numberOfDoors']} doors and "
+        f"{user_inputs['numberOfSeats']} seats. It was first registered in {user_inputs['first_registration_year_minimum']}, "
+        f"delivers {user_inputs['performance_kw']} kW of power and has a cubic capacity of {user_inputs['cubic_capacity']} cc. "
+        f"It costs {user_inputs['price_max']} euros and has {user_inputs['mealage_max']} km mileage."
+    )
+
 
 # Build follow-up prompt dynamically from preferences and missing fields
 def build_follow_up_prompt(prefs, missing_fields, last_user_message=""):
@@ -847,49 +890,48 @@ if submitted and user_input:
                     ]
                    
                     ordered_values = [parsed_json.get(key) for key in ordered_keys]
-                    st.write(ordered_values)
-                    query_vector = preprocess_input(
-                        ordered_values[2],  # category
-                        ordered_values[3],  # doors
-                        ordered_values[10],  # first_reg
-                        ordered_values[0],  # gearbox
-                        str(ordered_values[5]),  # seats
-                        ordered_values[1],  # fuel_type
-                        ordered_values[6],  # performance
-                        ordered_values[4],  # drivetype
-                        ordered_values[7]   # cubiccapacity
-                    )
-              
-                    results, count_results = search_similar_cars_without_filters(
-                        query_vector,
+                    user_inputs = dict(zip(ordered_keys, ordered_values)) 
+                    st.write(user_inputs)   
+                    # results, count_results = search_similar_cars_without_filters(
+                    #     user_inputs,
+                    #     numberofcars,
+                    #     similarity_threshold=percentagefinal,
+                    # )
+
+                    desc, query_vec = test(
+                        user_inputs,
                         numberofcars,
                         similarity_threshold=percentagefinal,
                     )
-                    if results:
-                        # Filtering the data depends on the choice of the user
-                        st.markdown("<br>", unsafe_allow_html=True)
-                        for car in results:
+
+                    st.write(f"🔍 Found {desc} similar cars using cosine")
+                    st.write(f"🔍 Found {query_vec}")
+
+                    # if results:
+                    #     # Filtering the data depends on the choice of the user
+                    #     st.markdown("<br>", unsafe_allow_html=True)
+                    #     for car in results:
             
-                            car_data = car["_source"]       
-                            real_ID = car_data["CarID"]
-                            full_car_info = get_car_by_id(real_ID)
+                    #         car_data = car["_source"]       
+                    #         real_ID = car_data["CarID"]
+                    #         full_car_info = get_car_by_id(real_ID)
         
-                            if full_car_info:
-                                 st.write(f"🆔 ID: {full_car_info['CarID']}")
-                                 st.write(f"🔥 Body Type: {full_car_info.get('BodyType', 'N/A')}")
-                                 st.write(f"📏 Make: {full_car_info['Make']}  | 📏 Model: {full_car_info.get('Model', 'N/A')} ")
-                                 st.write(f"⚙️ Gearbox: {full_car_info.get('GearBox', 'N/A')} | ⛽ Fuel Type : {full_car_info.get('Fuel', 'N/A')}")
-                                 st.write(f"💡 Body Color: {full_car_info.get('BodyColor', 'N/A')} | 🚪 Doors : {full_car_info.get('NumberOfDoors', 'N/A')}")
-                                 st.write(f"🚙 Drive Type: {full_car_info.get('DriveType', 'N/A')} | 🚗📏 Mileage : {full_car_info.get('Mileage', 'N/A')}")
-                                 st.write(f"🏁 Cubic Capacity: {full_car_info.get('CubicCapacity', 'N/A')} | ⚡ Performance : {full_car_info.get('Power', 'N/A')}")
-                                 st.write(f"👥 Number Of Seats: {full_car_info.get('NumberOfSeats', 'N/A')} | 🛠️ Usage State : {full_car_info.get('UsageState', 'N/A')}")
-                                 st.write(f"📅 First Registration: {full_car_info.get('FirstRegistration', 'N/A')} | 💰 Price: {full_car_info.get('Price', 'N/A')}")
-                                 #st.write(f"📅 Score : {car['_score']}")
-                                 st.write("---")
-                            else:
-                                 st.write(f"❌ Car with ID {real_ID} not found in DynamoDB.")
-                    else:
-                        st.write("❌ No similar cars found.")
+                    #         if full_car_info:
+                    #              st.write(f"🆔 ID: {full_car_info['CarID']}")
+                    #              st.write(f"🔥 Body Type: {full_car_info.get('BodyType', 'N/A')}")
+                    #              st.write(f"📏 Make: {full_car_info['Make']}  | 📏 Model: {full_car_info.get('Model', 'N/A')} ")
+                    #              st.write(f"⚙️ Gearbox: {full_car_info.get('GearBox', 'N/A')} | ⛽ Fuel Type : {full_car_info.get('Fuel', 'N/A')}")
+                    #              st.write(f"💡 Body Color: {full_car_info.get('BodyColor', 'N/A')} | 🚪 Doors : {full_car_info.get('NumberOfDoors', 'N/A')}")
+                    #              st.write(f"🚙 Drive Type: {full_car_info.get('DriveType', 'N/A')} | 🚗📏 Mileage : {full_car_info.get('Mileage', 'N/A')}")
+                    #              st.write(f"🏁 Cubic Capacity: {full_car_info.get('CubicCapacity', 'N/A')} | ⚡ Performance : {full_car_info.get('Power', 'N/A')}")
+                    #              st.write(f"👥 Number Of Seats: {full_car_info.get('NumberOfSeats', 'N/A')} | 🛠️ Usage State : {full_car_info.get('UsageState', 'N/A')}")
+                    #              st.write(f"📅 First Registration: {full_car_info.get('FirstRegistration', 'N/A')} | 💰 Price: {full_car_info.get('Price', 'N/A')}")
+                    #              #st.write(f"📅 Score : {car['_score']}")
+                    #              st.write("---")
+                    #         else:
+                    #              st.write(f"❌ Car with ID {real_ID} not found in DynamoDB.")
+                    # else:
+                    #     st.write("❌ No similar cars found.")
             else:
                 st.write("Failed to parse JSON from GPT response")
                 st.stop()
@@ -977,6 +1019,5 @@ if submitted and user_input:
                       st.write(f"❌ Car with ID {real_ID} not found in DynamoDB.")
                 else:
                     st.write("❌ No similar cars found.")
-
 
 
