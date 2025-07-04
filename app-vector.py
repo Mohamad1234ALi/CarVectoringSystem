@@ -865,6 +865,7 @@ if submitted and user_input:
             st.write("GPT gave no JSON")
             st.session_state.chat_history.append({"role": "assistant", "content": gpt_response})
             parsed_json = extract_json_from_response(gpt_response)
+            st.write(gpt_response)
             if parsed_json:
                 still_missing_check = extract_missing_fields(parsed_json)
                 if still_missing_check:
