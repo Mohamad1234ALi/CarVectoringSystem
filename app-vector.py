@@ -254,7 +254,7 @@ def search_similar_cars_without_filters(
   
     # Construct the query with bool filter and knn must
     description = generate_description(user_inputs)
-    st.write(f"🔍 Searching for cars similar to: {description}")
+    # st.write(f"🔍 Searching for cars similar to: {description}")
     query_vector = get_embedding(description)
 
     query = {
