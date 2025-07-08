@@ -871,9 +871,70 @@ if submitted and user_input:
                 st.write("still missing part and awaiting followup set to true")
                 st.session_state.chat_history.append({"role": "assistant", "content": follow_up_question})
                 st.session_state.awaiting_followup = True
+
             else:
+
                 st.session_state.awaiting_followup = False
-                st.session_state.chat_history.append({"role": "assistant", "content": json_text})  
+                st.write("No missing fields found. finished")
+                
+                ordered_keys = [
+                "gearbox",
+                "fueltype",
+                "bodytype",
+                "numberOfDoors",
+                "driveType",
+                "numberOfSeats",
+                "performance_kw",
+                "cubic_capacity",
+                "price_max",
+                "mealage_max",
+                "first_registration_year_minimum"
+                ]
+            
+                ordered_values = [json_text.get(key) for key in ordered_keys]
+                user_inputs = dict(zip(ordered_keys, ordered_values)) 
+                st.write(user_inputs)   
+                
+                results, count_results = search_similar_cars_without_filters(
+                    user_inputs,
+                    numberofcars,
+                    similarity_threshold=percentagefinal,
+                )
+
+            
+                st.write(f"🔍 Found {count_results} similar cars using cosine and embedding vector")
+
+                if results:
+                    
+                    st.markdown("<br>", unsafe_allow_html=True)
+                    for car in results:
+        
+                        car_data = car["_source"]       
+                        real_ID = car_data["CarID"]
+                        full_car_info = get_car_by_id(real_ID)
+    
+                        if full_car_info:
+                            st.write(f"🆔 ID: {full_car_info['CarID']}")
+                            st.write(f"🔥 Body Type: {full_car_info.get('BodyType', 'N/A')}")
+                            st.write(f"📏 Make: {full_car_info['Make']}  | 📏 Model: {full_car_info.get('Model', 'N/A')} ")
+                            st.write(f"⚙️ Gearbox: {full_car_info.get('GearBox', 'N/A')} | ⛽ Fuel Type : {full_car_info.get('Fuel', 'N/A')}")
+                            st.write(f"💡 Body Color: {full_car_info.get('BodyColor', 'N/A')} | 🚪 Doors : {full_car_info.get('NumberOfDoors', 'N/A')}")
+                            st.write(f"🚙 Drive Type: {full_car_info.get('DriveType', 'N/A')} | 🚗📏 Mileage : {full_car_info.get('Mileage', 'N/A')}")
+                            st.write(f"🏁 Cubic Capacity: {full_car_info.get('CubicCapacity', 'N/A')} | ⚡ Performance : {full_car_info.get('Power', 'N/A')}")
+                            st.write(f"👥 Number Of Seats: {full_car_info.get('NumberOfSeats', 'N/A')} | 🛠️ Usage State : {full_car_info.get('UsageState', 'N/A')}")
+                            st.write(f"📅 First Registration: {full_car_info.get('FirstRegistration', 'N/A')} | 💰 Price: {full_car_info.get('Price', 'N/A')}")
+                            #st.write(f"📅 Score : {car['_score']}")
+                            st.write("---")
+                        else:
+                            st.write(f"❌ Car with ID {real_ID} not found in DynamoDB.")
+
+                    st.session_state.chat_history = []
+                    st.session_state.awaiting_followup = False
+                    st.session_state.current_preferences = {} 
+                    st.success("✅ Session reset. You can now start a new conversation.") 
+    
+                else:
+                    st.write("❌ No similar cars found.")
 
         render_chat_history()      
 
@@ -893,7 +954,6 @@ if submitted and user_input:
         except Exception:
                 render_chat_history()
                 st.stop()
-
 
         if not gpt_gave_json:
             st.write("GPT gave no JSON")
