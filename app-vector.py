@@ -933,19 +933,11 @@ if submitted and user_input:
                         similarity_threshold=percentagefinal,
                     )
 
-                    # desc, query_vec = test(
-                    #     user_inputs,
-                    #     numberofcars,
-                    #     similarity_threshold=percentagefinal,
-                    # )
-
-                    # st.write(f"🔍 Found {desc} similar cars using cosine")
-                    # st.write(f"🔍 Found {query_vec}")
-
+                
                     st.write(f"🔍 Found {count_results} similar cars using cosine and embedding vector")
 
                     if results:
-                        # Filtering the data depends on the choice of the user
+                        
                         st.markdown("<br>", unsafe_allow_html=True)
                         for car in results:
             
@@ -967,11 +959,19 @@ if submitted and user_input:
                                  st.write("---")
                             else:
                                  st.write(f"❌ Car with ID {real_ID} not found in DynamoDB.")
+
+                        st.session_state.chat_history = []
+                        st.session_state.awaiting_followup = False
+                        st.session_state.current_preferences = {} 
+                        st.success("✅ Session reset. You can now start a new conversation.") 
+         
                     else:
                         st.write("❌ No similar cars found.")
             else:
                 st.write("Failed to parse JSON from GPT response")
                 st.stop()
+
+
            
 
         elif followup_prefs:
@@ -1022,14 +1022,14 @@ if submitted and user_input:
                 #     similarity_threshold=percentagefinal,
                 # )
 
-                desc, query_vec = test(
-                        user_inputs,
-                        numberofcars,
-                        similarity_threshold=percentagefinal,
-                )
+                # desc, query_vec = test(
+                #         user_inputs,
+                #         numberofcars,
+                #         similarity_threshold=percentagefinal,
+                # )
 
-                st.write(f"🔍 Found {desc} similar cars using cosine")
-                st.write(f"🔍 Found {query_vec}")
+                # st.write(f"🔍 Found {desc} similar cars using cosine")
+                # st.write(f"🔍 Found {query_vec}")
                 
                 # if results:
                 #  # Filtering the data depends on the choice of the user
