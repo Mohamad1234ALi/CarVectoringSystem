@@ -1035,10 +1035,7 @@ if submitted and user_input:
                         st.write("❌ No similar cars found.")
             else:
                 st.write("Failed to parse JSON from GPT response")
-                st.stop()
-
-
-           
+                st.stop()    
 
         elif followup_prefs:
         
@@ -1064,7 +1061,6 @@ if submitted and user_input:
             else:
                 st.write("Finished collecting preferences! 🎉")
                 st.session_state.awaiting_followup = False
-                st.write(st.session_state.current_preferences)
                 ordered_keys = [
                    "gearbox",
                    "fueltype",
@@ -1078,49 +1074,50 @@ if submitted and user_input:
                    "mealage_max",
                    "first_registration_year_minimum"
                 ]
-                ordered_values = [parsed_json.get(key) for key in ordered_keys]
+
+                ordered_values = [st.session_state.current_preferences.get(key) for key in ordered_keys]
                 user_inputs = dict(zip(ordered_keys, ordered_values)) 
                 st.write(user_inputs)   
                     
-                # results, count_results = search_similar_cars_without_filters(
-                #     user_inputs,
-                #     numberofcars,
-                #     similarity_threshold=percentagefinal,
-                # )
+                results, count_results = search_similar_cars_without_filters(
+                        user_inputs,
+                        numberofcars,
+                        similarity_threshold=percentagefinal,
+                )
 
-                # desc, query_vec = test(
-                #         user_inputs,
-                #         numberofcars,
-                #         similarity_threshold=percentagefinal,
-                # )
-
-                # st.write(f"🔍 Found {desc} similar cars using cosine")
-                # st.write(f"🔍 Found {query_vec}")
                 
-                # if results:
-                #  # Filtering the data depends on the choice of the user
-                #     st.markdown("<br>", unsafe_allow_html=True)
-                #     for car in results:
-            
-                #         car_data = car["_source"]       
-                #         real_ID = car_data["CarID"]
-                #         full_car_info = get_car_by_id(real_ID)
+                st.write(f"🔍 Found {count_results} similar cars using cosine and embedding vector")
+
+                if results:
+                    
+                    st.markdown("<br>", unsafe_allow_html=True)
+                    for car in results:
         
-                #         if full_car_info:
-                #             st.write(f"🆔 ID: {full_car_info['CarID']}")
-                #             st.write(f"🔥 Body Type: {full_car_info.get('BodyType', 'N/A')}")
-                #             st.write(f"📏 Make: {full_car_info['Make']}  | 📏 Model: {full_car_info.get('Model', 'N/A')} ")
-                #             st.write(f"⚙️ Gearbox: {full_car_info.get('GearBox', 'N/A')} | ⛽ Fuel Type : {full_car_info.get('Fuel', 'N/A')}")
-                #             st.write(f"💡 Body Color: {full_car_info.get('BodyColor', 'N/A')} | 🚪 Doors : {full_car_info.get('NumberOfDoors', 'N/A')}")
-                #             st.write(f"🚙 Drive Type: {full_car_info.get('DriveType', 'N/A')} | 🚗📏 Mileage : {full_car_info.get('Mileage', 'N/A')}")
-                #             st.write(f"🏁 Cubic Capacity: {full_car_info.get('CubicCapacity', 'N/A')} | ⚡ Performance : {full_car_info.get('Power', 'N/A')}")
-                #             st.write(f"👥 Number Of Seats: {full_car_info.get('NumberOfSeats', 'N/A')} | 🛠️ Usage State : {full_car_info.get('UsageState', 'N/A')}")
-                #             st.write(f"📅 First Registration: {full_car_info.get('FirstRegistration', 'N/A')} | 💰 Price: {full_car_info.get('Price', 'N/A')}")
-                #             #st.write(f"📅 Score : {car['_score']}")
-                #             st.write("---")
-                #         else:
-                #              st.write(f"❌ Car with ID {real_ID} not found in DynamoDB.")
-                # else:
-                #     st.write("❌ No similar cars found.")
+                        car_data = car["_source"]       
+                        real_ID = car_data["CarID"]
+                        full_car_info = get_car_by_id(real_ID)
+    
+                        if full_car_info:
+                                st.write(f"🆔 ID: {full_car_info['CarID']}")
+                                st.write(f"🔥 Body Type: {full_car_info.get('BodyType', 'N/A')}")
+                                st.write(f"📏 Make: {full_car_info['Make']}  | 📏 Model: {full_car_info.get('Model', 'N/A')} ")
+                                st.write(f"⚙️ Gearbox: {full_car_info.get('GearBox', 'N/A')} | ⛽ Fuel Type : {full_car_info.get('Fuel', 'N/A')}")
+                                st.write(f"💡 Body Color: {full_car_info.get('BodyColor', 'N/A')} | 🚪 Doors : {full_car_info.get('NumberOfDoors', 'N/A')}")
+                                st.write(f"🚙 Drive Type: {full_car_info.get('DriveType', 'N/A')} | 🚗📏 Mileage : {full_car_info.get('Mileage', 'N/A')}")
+                                st.write(f"🏁 Cubic Capacity: {full_car_info.get('CubicCapacity', 'N/A')} | ⚡ Performance : {full_car_info.get('Power', 'N/A')}")
+                                st.write(f"👥 Number Of Seats: {full_car_info.get('NumberOfSeats', 'N/A')} | 🛠️ Usage State : {full_car_info.get('UsageState', 'N/A')}")
+                                st.write(f"📅 First Registration: {full_car_info.get('FirstRegistration', 'N/A')} | 💰 Price: {full_car_info.get('Price', 'N/A')}")
+                                #st.write(f"📅 Score : {car['_score']}")
+                                st.write("---")
+                        else:
+                                st.write(f"❌ Car with ID {real_ID} not found in DynamoDB.")
+
+                    st.session_state.chat_history = []
+                    st.session_state.awaiting_followup = False
+                    st.session_state.current_preferences = {} 
+                    st.success("✅ Session reset. You can now start a new conversation.") 
+        
+                else:
+                    st.write("❌ No similar cars found.")
 
 
