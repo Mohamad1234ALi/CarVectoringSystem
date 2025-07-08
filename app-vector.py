@@ -903,13 +903,12 @@ if submitted and user_input:
             if parsed_json:
                 still_missing_check = extract_missing_fields(parsed_json)
                 if still_missing_check:
-                    st.write(" missing fields found. ha")
+                    st.write(" missing fields found in gpt response")
                     render_chat_history()
                     st.stop()
                 else:
                     st.write("No missing fields found. finished")
                     st.session_state.awaiting_followup = False
-                    st.write(parsed_json)
                     ordered_keys = [
                      "gearbox",
                      "fueltype",
