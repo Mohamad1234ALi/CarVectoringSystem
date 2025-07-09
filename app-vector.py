@@ -16,7 +16,7 @@ import openai
 from openai import AzureOpenAI
 from tenacity import retry, stop_after_attempt, wait_fixed, retry_if_exception_type
 from opensearchpy.exceptions import ConnectionTimeout, ConnectionError, TransportError
-from openai import RateLimitError, APIConnectionError, ServiceUnavailableError
+from openai import RateLimitError, APIConnectionError
 
 # OpenSearch Configuration
 OPENSEARCH_HOST = st.secrets["OPENSEARCH_HOST"] # the opensearch endpoint
@@ -255,7 +255,7 @@ def search_similar_cars_with_filters(
     retry=retry_if_exception_type((
         RateLimitError,
         APIConnectionError,
-        ServiceUnavailableError
+        TimeoutError  # Built-in
     ))
 )
 def get_embedding(text):
