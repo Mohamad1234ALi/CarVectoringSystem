@@ -14,6 +14,14 @@ import re
 import json
 import openai
 from openai import AzureOpenAI
+from tenacity import retry, stop_after_attempt, wait_fixed, retry_if_exception_type
+from opensearchpy.exceptions import ConnectionTimeout, ConnectionError, TransportError
+from openai._exceptions import (
+    Timeout,
+    RateLimitError,
+    APIConnectionError,
+    ServiceUnavailableError
+)
 
 # OpenSearch Configuration
 OPENSEARCH_HOST = st.secrets["OPENSEARCH_HOST"] # the opensearch endpoint
@@ -157,6 +165,12 @@ def preprocess_input(category, doors, first_reg, gearbox, seats, fuel_type, perf
     
 # Function to search similar cars in OpenSearch
 
+@retry(
+    reraise=True,
+    stop=stop_after_attempt(3),  # Max 3 attempts
+    wait=wait_fixed(5),          # Wait 5 seconds between retries
+    retry=retry_if_exception_type((ConnectionTimeout, ConnectionError, TransportError))
+)
 def search_similar_cars_with_filters(
     query_vector, 
     numberofcars, 
@@ -238,6 +252,18 @@ def search_similar_cars_with_filters(
     return filtered[:numberofcars], count_result
   
 
+# Retry on OpenAI API errors and timeouts
+@retry(
+    reraise=True,
+    stop=stop_after_attempt(3),
+    wait=wait_fixed(5),
+    retry=retry_if_exception_type((
+        Timeout,
+        RateLimitError,
+        APIConnectionError,
+        ServiceUnavailableError
+    ))
+)
 def get_embedding(text):
     response = client_azure.embeddings.create(
         input=text,
@@ -245,6 +271,15 @@ def get_embedding(text):
     )
     return response.data[0].embedding
 
+
+
+
+@retry(
+    reraise=True,
+    stop=stop_after_attempt(3),  # Max 3 attempts
+    wait=wait_fixed(5),          # Wait 5 seconds between retries
+    retry=retry_if_exception_type((ConnectionTimeout, ConnectionError, TransportError))
+)
 def search_similar_cars_without_filters(
     user_inputs, 
     numberofcars, 
@@ -278,21 +313,6 @@ def search_similar_cars_without_filters(
     filtered = [r for r in results if r["_score"] >= similarity_threshold]
     random.shuffle(filtered)
     return filtered[:numberofcars], count_result
-
-# def test(
-#     user_inputs, 
-#     numberofcars, 
-#     similarity_threshold,
-    
-# ):
-  
-#     # Construct the query with bool filter and knn must
-#     description = generate_description(user_inputs)
-#     query_vector = get_embedding(description)
-
-#     return description, query_vector
-
-
 
 
 def search_count_Filter(
