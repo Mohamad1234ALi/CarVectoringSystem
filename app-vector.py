@@ -16,7 +16,7 @@ import openai
 from openai import AzureOpenAI
 from tenacity import retry, stop_after_attempt, wait_fixed, retry_if_exception_type
 from opensearchpy.exceptions import ConnectionTimeout, ConnectionError, TransportError
-from openai import RateLimitError, APIConnectionError
+
 
 # OpenSearch Configuration
 OPENSEARCH_HOST = st.secrets["OPENSEARCH_HOST"] # the opensearch endpoint
@@ -245,19 +245,8 @@ def search_similar_cars_with_filters(
     filtered = [r for r in results if r["_score"] >= similarity_threshold]
     random.shuffle(filtered)
     return filtered[:numberofcars], count_result
-  
 
-# Retry on OpenAI API errors and timeouts
-@retry(
-    reraise=True,
-    stop=stop_after_attempt(3),
-    wait=wait_fixed(5),
-    retry=retry_if_exception_type((
-        RateLimitError,
-        APIConnectionError,
-        TimeoutError  # Built-in
-    ))
-)
+
 def get_embedding(text):
     response = client_azure.embeddings.create(
         input=text,
