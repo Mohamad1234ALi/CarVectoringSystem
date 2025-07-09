@@ -245,8 +245,17 @@ def search_similar_cars_with_filters(
     filtered = [r for r in results if r["_score"] >= similarity_threshold]
     random.shuffle(filtered)
     return filtered[:numberofcars], count_result
+  
 
-
+# Retry on OpenAI API errors and timeouts
+@retry(
+    reraise=True,
+    stop=stop_after_attempt(3),
+    wait=wait_fixed(5),
+    retry=retry_if_exception_type((
+        TimeoutError  # Built-in
+    ))
+)
 def get_embedding(text):
     response = client_azure.embeddings.create(
         input=text,
