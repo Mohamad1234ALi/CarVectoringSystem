@@ -963,10 +963,11 @@ if submitted and user_input:
                 st.stop()
 
         if not gpt_gave_json:
-            st.write("GPT gave no JSON")
-            st.session_state.chat_history.append({"role": "assistant", "content": gpt_response})
+           
             parsed_json = extract_json_from_response(gpt_response) 
             if parsed_json:
+                st.write("GPT gave no JSON")
+                st.session_state.chat_history.append({"role": "assistant", "content": gpt_response})
                 still_missing_check = extract_missing_fields(parsed_json)
                 if still_missing_check:
                     st.write(" missing fields found in gpt response")
@@ -1033,8 +1034,9 @@ if submitted and user_input:
          
                     else:
                         st.write("❌ No similar cars found.")
-            else:
-                st.write("Failed to parse JSON from GPT response")
+            else:        
+                st.session_state.chat_history.append({"role": "assistant", "content": gpt_response})
+                render_chat_history()
                 st.stop()    
 
         elif followup_prefs:
