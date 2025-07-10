@@ -492,10 +492,10 @@ if st.button("Find Similar Cars") :
                                                              fuel_needed=fuel_needed,category_needed=category_needed,doors_needed=doors_needed,drive_needed=drive_needed,
                                                              seats_needed=seats_needed , gearbox_value=gearbox ,fuel_value=fuel_type, category_value=category,doors_value=doors
                                                               , drive_value=drivetype,seats_value=seats)
-    # count = len(results)
+    count_n = len(results)
     st.markdown("<br>", unsafe_allow_html=True)
     st.write(f"🔍 Found {count_results} similar cars using cosine")
-    # st.write(f"🔍 Found {count} similar cars after filtering with percentage {percentagefinal}")
+    st.write(f"🔍 Found {count_n} similar cars after filtering with percentage {percentagefinal}")
     
     if results:
         # Filtering the data depends on the choice of the user
