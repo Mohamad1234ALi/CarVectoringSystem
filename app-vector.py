@@ -469,22 +469,22 @@ mileage_min, mileage_max = mileage_range
     
 if st.button("Find Similar Cars") :
 
-    count = search_count_Filter(
-      client=client,
-      index_name=INDEX_NAME,
-      price_min=price_min,
-      price_max=price_max,
-      mileage_min=mileage_min,
-      mileage_max=mileage_max,
-      gearbox_needed=gearbox_needed , 
-      fuel_needed=fuel_needed,category_needed=category_needed,doors_needed=doors_needed,drive_needed=drive_needed,
-      seats_needed=seats_needed , gearbox_value=gearbox ,fuel_value=fuel_type, category_value=category,doors_value=doors,
-      drive_value=drivetype,seats_value=seats
-    )
+    # count = search_count_Filter(
+    #   client=client,
+    #   index_name=INDEX_NAME,
+    #   price_min=price_min,
+    #   price_max=price_max,
+    #   mileage_min=mileage_min,
+    #   mileage_max=mileage_max,
+    #   gearbox_needed=gearbox_needed , 
+    #   fuel_needed=fuel_needed,category_needed=category_needed,doors_needed=doors_needed,drive_needed=drive_needed,
+    #   seats_needed=seats_needed , gearbox_value=gearbox ,fuel_value=fuel_type, category_value=category,doors_value=doors,
+    #   drive_value=drivetype,seats_value=seats
+    # )
     st.write(f"🧮 {price_min} and {price_max} the price range.")
     st.write(f"🧮 {mileage_min} and {mileage_max} the mileage range.")
     
-    st.write(f"🧮 {count} cars match your filter criteria.")
+    # st.write(f"🧮 {count} cars match your filter criteria.")
    
     query_vector = preprocess_input(category, doors, first_reg, gearbox, seats, fuel_type, performance, drivetype, cubiccapacity)
     
@@ -492,10 +492,10 @@ if st.button("Find Similar Cars") :
                                                              fuel_needed=fuel_needed,category_needed=category_needed,doors_needed=doors_needed,drive_needed=drive_needed,
                                                              seats_needed=seats_needed , gearbox_value=gearbox ,fuel_value=fuel_type, category_value=category,doors_value=doors
                                                               , drive_value=drivetype,seats_value=seats)
-    count = len(results)
+    # count = len(results)
     st.markdown("<br>", unsafe_allow_html=True)
     st.write(f"🔍 Found {count_results} similar cars using cosine")
-    st.write(f"🔍 Found {count} similar cars after filtering with percentage {percentagefinal}")
+    # st.write(f"🔍 Found {count} similar cars after filtering with percentage {percentagefinal}")
     
     if results:
         # Filtering the data depends on the choice of the user
