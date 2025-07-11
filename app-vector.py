@@ -306,7 +306,17 @@ def search_similar_cars_without_filters(
     # Optional: filter results by similarity threshold on _score
     filtered = [r for r in results if r["_score"] >= similarity_threshold]
     # random.shuffle(filtered)
-    return filtered[:numberofcars], count_result
+
+     # Keep the first 3 fixed, shuffle the rest
+    fixed_part = filtered[:3]
+    remaining_part = filtered[3:]
+    random.shuffle(remaining_part)
+
+    # Combine fixed and shuffled parts
+    final_results = fixed_part + remaining_part
+
+    return final_results[:numberofcars], count_result
+    #return filtered[:numberofcars], count_result
 
 
 def search_count_Filter(
