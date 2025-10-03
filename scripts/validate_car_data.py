@@ -1,6 +1,7 @@
 import boto3
 import pandas as pd
 import great_expectations as ge
+from great_expectations.dataset import PandasDataset
 import sys
 from io import StringIO
 
@@ -41,7 +42,7 @@ for col in numeric_cols:
 # -------------------------------
 # Convert to Great Expectations DataFrame
 # -------------------------------
-ge_df = ge.from_pandas(df)
+ge_df = PandasDataset(df)
 
 # -------------------------------
 # Define expectations
