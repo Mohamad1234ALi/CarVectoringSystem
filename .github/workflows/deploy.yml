@@ -31,7 +31,6 @@ jobs:
       # 4️⃣ Install dependencies
       - name: Install dependencies
         run: |
-          pip install -r requirements.txt
           pip install great_expectations boto3 pandas
 
       # 5️⃣ Validate car data

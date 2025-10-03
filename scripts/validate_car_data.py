@@ -1,10 +1,8 @@
 import boto3
 import pandas as pd
-import great_expectations as ge
-from great_expectations.core.batch import BatchRequest
-from great_expectations.validator.validator import Validator
 import sys
 from io import StringIO
+import great_expectations as gx
 
 # -------------------------------
 # CONFIG: DynamoDB table and S3 paths
@@ -43,42 +41,57 @@ for col in numeric_cols:
 # -------------------------------
 # Convert to Great Expectations DataFrame
 # -------------------------------
-context = ge.get_context()
+# 1. Get a Data Context
+# This is the entry point to your GX project
+context = gx.get_context()
 
-# Create a Validator directly from Pandas DataFrame
-validator = context.sources.pandas_default.read_batch(pd.DataFrame(df))
+# 2. Add a Datasource for in-memory pandas DataFrames
+datasource = context.sources.add_pandas(name="my_pandas_datasource")
 
-# -------------------------------
-# Define expectations
-# -------------------------------
+# ... (Continuing from gx_example.py)
+
+# 3. Create a Data Asset and get a Validator
+# Use the RuntimeDataConnector for in-memory data
+data_asset = datasource.add_dataframe_asset(
+    name="my_dataframe_asset"
+)
+
+# Get a Validator for the DataFrame
+validator = context.get_validator(
+    batch_request=data_asset.build_batch_request(dataframe=df),
+    create_expectation_suite_with_name="product_data_quality_suite"
+)
+
+# 4. Define expectations on your data
+# Expectation 1: `CarID` column must be unique
 validator.expect_column_values_to_not_be_null("CarID")
-validator.expect_column_values_to_not_be_null("Mileage")
-validator.expect_column_values_to_be_between("Mileage", 0, 300000)
-validator.expect_column_values_to_not_be_null("FirstRegistration")
-validator.expect_column_values_to_be_between("FirstRegistration", 1950, 2031)
-validator.expect_column_values_to_not_be_null("Power")
-validator.expect_column_values_to_be_between("Power", 0, 5000)
+validator.expect_column_values_to_be_unique(column="CarID")
+# Expectation 2: `Mileage` column must be between 0 and 300000
+validator.expect_column_values_to_be_between(column="Mileage", min_value=0, max_value=300000)
+# Expectation 3: `category` column values must be in a specific set
+#validator.expect_column_values_to_be_in_set(column="category", value_set=["electronics", "apparel", "food"])
 
-# -------------------------------
-# Validate data
-# -------------------------------
-results = validator.validate()
+# 5. Save the Expectation Suite
+# Saving the suite allows you to reuse it for future validations
+validator.save_expectation_suite()
 
-if not results["success"]:
-    print("❌ Data validation failed!")
-    for r in results["results"]:
-        if not r["success"]:
-            print(f"Failed expectation: {r['expectation_config']['expectation_type']} on column {r['expectation_config']['kwargs'].get('column')}")
+
+# ... (Continuing from gx_example.py)
+
+# 6. Create and run a checkpoint to validate the data
+checkpoint = gx.checkpoint.SimpleCheckpoint(
+    name="my_simple_checkpoint",
+    data_context=context,
+    validator=validator,
+)
+
+checkpoint_result = checkpoint.run()
+
+if not checkpoint_result["success"]:
     sys.exit(1)
-else:
-    print("✅ Data validation passed!")
 
-# -------------------------------
-# Save validated data to trusted S3
-# -------------------------------
-# csv_buffer = StringIO()
-# df.to_csv(csv_buffer, index=False)
+# 7. Print the validation results
+# The `success` flag shows if all expectations passed
+print("\nValidation Result:")
+print(f"Success: {checkpoint_result['success']}")
 
-# s3 = boto3.client('s3')
-# s3.put_object(Bucket=TRUSTED_BUCKET, Key=TRUSTED_KEY, Body=csv_buffer.getvalue())
-print("Validated data ")
