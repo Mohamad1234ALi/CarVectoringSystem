@@ -47,8 +47,17 @@ jobs:
           echo "Updating container image..."
           NEW_TASK_DEF=$(echo $TASK_DEF | jq --arg IMAGE "${{ secrets.ECR_REPOSITORY }}:$IMAGE_TAG" \
             '.taskDefinition | .containerDefinitions[0].image=$IMAGE | 
-            {family: .family, containerDefinitions: .containerDefinitions, taskRoleArn: .taskRoleArn, executionRoleArn: .executionRoleArn, networkMode: .networkMode, requiresCompatibilities: .requiresCompatibilities, cpu: .cpu, memory: .memory}')
-
+            { 
+              family: .family, 
+              containerDefinitions: .containerDefinitions, 
+              taskRoleArn: (.taskRoleArn // ""), 
+              executionRoleArn: (.executionRoleArn // ""), 
+              networkMode: .networkMode, 
+              requiresCompatibilities: .requiresCompatibilities, 
+              cpu: .cpu, 
+              memory: .memory 
+            }')
+          
           echo "$NEW_TASK_DEF" > new-task-def.json
           aws ecs register-task-definition --cli-input-json file://new-task-def.json
 
