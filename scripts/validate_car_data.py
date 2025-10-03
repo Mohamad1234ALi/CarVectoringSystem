@@ -1,7 +1,8 @@
 import boto3
 import pandas as pd
 import great_expectations as ge
-from great_expectations.dataset import PandasDataset
+from great_expectations.core.batch import BatchRequest
+from great_expectations.validator.validator import Validator
 import sys
 from io import StringIO
 
@@ -42,29 +43,32 @@ for col in numeric_cols:
 # -------------------------------
 # Convert to Great Expectations DataFrame
 # -------------------------------
-ge_df = PandasDataset(df)
+context = ge.get_context()
+
+# Create a Validator directly from Pandas DataFrame
+validator = context.sources.pandas_default.read_batch(pd.DataFrame(df))
 
 # -------------------------------
 # Define expectations
 # -------------------------------
-ge_df.expect_column_values_to_not_be_null("CarID")
-ge_df.expect_column_values_to_not_be_null("Mileage")
-ge_df.expect_column_values_to_be_between("Mileage", 0, 300000)
-ge_df.expect_column_values_to_not_be_null("FirstRegistration")
-ge_df.expect_column_values_to_be_between("FirstRegistration", 1950, 2031)
-ge_df.expect_column_values_to_not_be_null("Power")
-ge_df.expect_column_values_to_be_between("Power", 0, 5000)
+validator.expect_column_values_to_not_be_null("CarID")
+validator.expect_column_values_to_not_be_null("Mileage")
+validator.expect_column_values_to_be_between("Mileage", 0, 300000)
+validator.expect_column_values_to_not_be_null("FirstRegistration")
+validator.expect_column_values_to_be_between("FirstRegistration", 1950, 2031)
+validator.expect_column_values_to_not_be_null("Power")
+validator.expect_column_values_to_be_between("Power", 0, 5000)
 
 # -------------------------------
 # Validate data
 # -------------------------------
-results = ge_df.validate()
+results = validator.validate()
 
-if not results['success']:
+if not results["success"]:
     print("❌ Data validation failed!")
-    for res in results['results']:
-        if not res['success']:
-            print(f"Failed expectation: {res['expectation_config']['expectation_type']} on column {res['expectation_config']['kwargs'].get('column')}")
+    for r in results["results"]:
+        if not r["success"]:
+            print(f"Failed expectation: {r['expectation_config']['expectation_type']} on column {r['expectation_config']['kwargs'].get('column')}")
     sys.exit(1)
 else:
     print("✅ Data validation passed!")
