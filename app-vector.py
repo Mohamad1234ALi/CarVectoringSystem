@@ -836,6 +836,7 @@ def call_gpt(user_input, system_prompt, temperature=0.4, max_tokens=300):
 
 # Streamlit UI
 st.title("💬 Azure GPT Chat")
+st.write("Welcome to the car recommendation chat! Ask me anything about finding your perfect car.")
 
 with st.form(key="chat_form", clear_on_submit=True):
 
