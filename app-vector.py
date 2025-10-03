@@ -8,6 +8,7 @@ from io import StringIO
 import requests
 import joblib
 from io import BytesIO
+import os
 import boto3
 import random
 import re
@@ -19,24 +20,23 @@ from opensearchpy.exceptions import ConnectionTimeout, ConnectionError, Transpor
 from openai import RateLimitError, APIConnectionError
 
 # OpenSearch Configuration
-OPENSEARCH_HOST = st.secrets["OPENSEARCH_HOST"] # the opensearch endpoint
+OPENSEARCH_HOST = os.environ.get("OPENSEARCH_HOST") # the opensearch endpoint
 INDEX_NAME = "cars_index_new"
-USERNAME = st.secrets["USERNAME"]
-PASSWORD = st.secrets["PASSWORD"]
+USERNAME = os.environ.get("USERNAME")
+PASSWORD = os.environ.get("PASSWORD")
 
 # Get the parameters from the settings in streamlit app
-aws_access_key = st.secrets["AWS_ACCESS_KEY_ID"]
-aws_secret_key = st.secrets["AWS_SECRET_ACCESS_KEY"]
-aws_region = st.secrets["AWS_DEFAULT_REGION"]
+aws_access_key = os.environ.get("AWS_ACCESS_KEY_ID")
+aws_secret_key = os.environ.get("AWS_SECRET_ACCESS_KEY")
+aws_region = os.environ.get("AWS_DEFAULT_REGION")
 
-api_key = st.secrets["api_key"]
-endpoint = st.secrets["endpoint"]
-deployment_name = st.secrets["deployment_name"]
-api_version = st.secrets["api_version"]
+api_key = os.environ.get("api_key")
+endpoint = os.environ.get("endpoint")
+deployment_name = os.environ.get("deployment_name")
+api_version = os.environ.get("api_version")
 
 
 # Initialize the boto3
-#hahahaha
 boto3.setup_default_session(
     aws_access_key_id=aws_access_key,
     aws_secret_access_key=aws_secret_key,
@@ -44,8 +44,8 @@ boto3.setup_default_session(
 )
 
 # Connect and access to the dynamodb table 
-dynamodb = boto3.resource(st.secrets["DYNAMODB"], region_name="us-east-1") 
-table = dynamodb.Table(st.secrets["DYNAMO_TABLE"])
+dynamodb = boto3.resource(os.environ.get("DYNAMODB"), region_name="us-east-1") 
+table = dynamodb.Table(os.environ.get("DYNAMO_TABLE"))
 
 # Load scaler from s3 (we need the same scaler while scale the numerical data (systemvectorizaion file))
 @st.cache_resource
@@ -93,11 +93,11 @@ NUMERICAL_FEATURES = ["FirstRegistration", "Power", "CubicCapacity"]
 
 
 # Initialize StandardScaler and OneHotEncoder
-scaler_url = st.secrets["SCALER_URL"]
+scaler_url = os.environ.get("SCALER_URL")
 scaler = load_scaler(scaler_url)
 
 
-url = st.secrets["CATEGORIES_URL"]
+url = os.environ.get("CATEGORIES_URL")
 
 response = requests.get(url)
 response.raise_for_status()  # to catch HTTP errors
