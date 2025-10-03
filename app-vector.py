@@ -36,6 +36,8 @@ api_version = st.secrets["api_version"]
 
 
 # Initialize the boto3
+# new test
+# newwwwwwwwwwwww
 boto3.setup_default_session(
     aws_access_key_id=aws_access_key,
     aws_secret_access_key=aws_secret_key,
