@@ -6,17 +6,18 @@ from great_expectations.core.batch import Batch
 from great_expectations.validator.validator import Validator
 from great_expectations.execution_engine import PandasExecutionEngine
 from great_expectations.data_context.data_context.ephemeral_data_context import EphemeralDataContext
+from great_expectations.data_context.types.base import DataContextConfig, DatasourceConfig
 
 # -------------------------------
 # CONFIG
 # -------------------------------
 DYNAMODB_TABLE = "CarList"
-region_name = "us-east-1"
+REGION = "us-east-1"
 
 # -------------------------------
-# Read all items from DynamoDB
+# Read items from DynamoDB
 # -------------------------------
-boto3.setup_default_session(region_name=region_name)
+boto3.setup_default_session(region_name=REGION)
 dynamodb = boto3.resource("dynamodb")
 table = dynamodb.Table(DYNAMODB_TABLE)
 
@@ -41,14 +42,24 @@ for col in numeric_cols:
         df[col] = pd.to_numeric(df[col], errors="coerce")
 
 # -------------------------------
-# Great Expectations validation
+# Great Expectations Validation
 # -------------------------------
-context = EphemeralDataContext()  # ✅ create temporary context
+
+# 1️⃣ Create minimal in-memory DataContext config
+project_config = DataContextConfig(
+    datasources={},
+    store_backend_defaults=None,
+    anonymous_usage_statistics={"enabled": False},
+)
+
+context = EphemeralDataContext(project_config=project_config)
+
+# 2️⃣ Set up the execution engine and validator
 engine = PandasExecutionEngine()
 batch = Batch(data=df)
 validator = Validator(execution_engine=engine, batches=[batch], data_context=context)
 
-# Expectations
+# 3️⃣ Add expectations
 if "CarID" in df.columns:
     validator.expect_column_values_to_not_be_null("CarID")
     validator.expect_column_values_to_be_unique("CarID")
@@ -56,15 +67,16 @@ if "CarID" in df.columns:
 if "Mileage" in df.columns:
     validator.expect_column_values_to_be_between("Mileage", min_value=0, max_value=300000)
 
-# Run validations
+# 4️⃣ Run validation
 results = validator.validate()
 success = results["success"]
 
-print("\nValidation Results:")
-print(success)
+print("\n✅ Validation completed.")
+print(f"Validation success: {success}")
 
-# Fail CI/CD if expectations are not met
+# 5️⃣ Fail CI/CD if data quality issues found
 if not success:
+    print("❌ Data quality checks failed. Stopping deployment.")
     sys.exit(1)
 else:
-    print("✅ Data validation passed successfully.")
+    print("✅ All data quality checks passed successfully.")
