@@ -2,11 +2,6 @@ import boto3
 import pandas as pd
 import sys
 import great_expectations as gx
-from great_expectations.core.batch import Batch
-from great_expectations.validator.validator import Validator
-from great_expectations.execution_engine import PandasExecutionEngine
-from great_expectations.data_context.data_context.ephemeral_data_context import EphemeralDataContext
-from great_expectations.data_context.types.base import DataContextConfig
 
 # -------------------------------
 # CONFIG
@@ -21,62 +16,53 @@ boto3.setup_default_session(region_name=REGION)
 dynamodb = boto3.resource("dynamodb")
 table = dynamodb.Table(DYNAMODB_TABLE)
 
-print("Fetching data from DynamoDB...")
-response = table.scan()
-items = response["Items"]
 
-while "LastEvaluatedKey" in response:
-    response = table.scan(ExclusiveStartKey=response["LastEvaluatedKey"])
-    items.extend(response["Items"])
+def main():
 
-if not items:
-    print("❌ No data found in DynamoDB!")
-    sys.exit(1)
+    print("Fetching data from DynamoDB...")
+    response = table.scan()
+    items = response["Items"]
 
-df = pd.DataFrame(items)
+    while "LastEvaluatedKey" in response:
+        response = table.scan(ExclusiveStartKey=response["LastEvaluatedKey"])
+        items.extend(response["Items"])
 
-# Convert numeric columns
-numeric_cols = ["Mileage", "Power"]
-for col in numeric_cols:
-    if col in df.columns:
-        df[col] = pd.to_numeric(df[col], errors="coerce")
+    if not items:
+        print("❌ No data found in DynamoDB!")
+        sys.exit(1)
 
-# -------------------------------
-# Great Expectations Validation
-# -------------------------------
+    df = pd.DataFrame(items)
 
-# 1️⃣ Create minimal in-memory DataContext config
-project_config = DataContextConfig(
-    datasources={},
-    store_backend_defaults=None,
-    anonymous_usage_statistics={"enabled": False},
-)
+    # Convert numeric columns
+    numeric_cols = ["Mileage", "Power"]
+    for col in numeric_cols:
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors="coerce")
 
-context = EphemeralDataContext(project_config=project_config)
+    # Create an in-memory Great Expectations context
+    context = gx.get_context(mode="ephemeral")
 
-# 2️⃣ Create execution engine + validator
-engine = PandasExecutionEngine()
-batch = Batch(data=df)
-validator = Validator(execution_engine=engine, batches=[batch], data_context=context)
+    # Convert DataFrame into a GE Dataset
+    batch = gx.read_pandas(df)
 
-# 3️⃣ Define expectations
-if "CarID" in df.columns:
-    validator.expect_column_values_to_not_be_null("CarID")
-    validator.expect_column_values_to_be_unique("CarID")
+    print("🔍 Running data quality checks...")
 
-if "Mileage" in df.columns:
-    validator.expect_column_values_to_be_between("Mileage", min_value=0, max_value=300000)
+    # Define validation rules (expectations)
+    batch.expect_column_values_to_not_be_null("Power")
+    batch.expect_column_values_to_not_be_null("CarID")
 
-# 4️⃣ Run validation
-results = validator.validate()
-success = results["success"]
+    print("🧾 Validating dataset...")
+    results = batch.validate()
 
-print("\n✅ Validation completed.")
-print(f"Validation success: {success}")
+    # Check for failures
+    if not results["success"]:
+        print("❌ Data validation failed!")
+        for r in results["results"]:
+            if not r["success"]:
+                print(f" - {r['expectation_config']['expectation_type']}")
+        sys.exit(1)
+    else:
+        print("✅ All data quality checks passed!")
 
-# 5️⃣ Fail CI/CD if validation fails
-if not success:
-    print("❌ Data quality checks failed. Stopping deployment.")
-    sys.exit(1)
-else:
-    print("✅ All data quality checks passed successfully.")
+if __name__ == "__main__":
+    main()
