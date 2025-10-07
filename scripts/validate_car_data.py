@@ -6,7 +6,7 @@ from great_expectations.core.batch import Batch
 from great_expectations.validator.validator import Validator
 from great_expectations.execution_engine import PandasExecutionEngine
 from great_expectations.data_context.data_context.ephemeral_data_context import EphemeralDataContext
-from great_expectations.data_context.types.base import DataContextConfig, DatasourceConfig
+from great_expectations.data_context.types.base import DataContextConfig
 
 # -------------------------------
 # CONFIG
@@ -54,12 +54,12 @@ project_config = DataContextConfig(
 
 context = EphemeralDataContext(project_config=project_config)
 
-# 2️⃣ Set up the execution engine and validator
+# 2️⃣ Create execution engine + validator
 engine = PandasExecutionEngine()
 batch = Batch(data=df)
 validator = Validator(execution_engine=engine, batches=[batch], data_context=context)
 
-# 3️⃣ Add expectations
+# 3️⃣ Define expectations
 if "CarID" in df.columns:
     validator.expect_column_values_to_not_be_null("CarID")
     validator.expect_column_values_to_be_unique("CarID")
@@ -74,7 +74,7 @@ success = results["success"]
 print("\n✅ Validation completed.")
 print(f"Validation success: {success}")
 
-# 5️⃣ Fail CI/CD if data quality issues found
+# 5️⃣ Fail CI/CD if validation fails
 if not success:
     print("❌ Data quality checks failed. Stopping deployment.")
     sys.exit(1)
